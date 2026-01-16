@@ -73,11 +73,7 @@ settings = get_settings()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        settings.frontend_url,
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -110,11 +106,8 @@ async def root():
 async def health_check():
     """Health check endpoint."""
     client = get_iboard_client()
-    
-    # Quick test to check if API is working
     api_ok = False
     try:
-        # Test with a quick request
         stocks = await client.get_stocks("hose")
         api_ok = len(stocks) > 0
     except Exception as e:

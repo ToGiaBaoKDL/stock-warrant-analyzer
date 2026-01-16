@@ -31,7 +31,7 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response) {
       const status = error.response.status;
-      
+
       if (status === 404) {
         console.error("Resource not found:", error.config?.url);
       } else if (status === 500) {
@@ -40,7 +40,7 @@ apiClient.interceptors.response.use(
     } else if (error.request) {
       console.error("Network error - no response received");
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -65,10 +65,10 @@ export const endpoints = {
     },
     price: (symbol: string) => `/stocks/price/${symbol}`,
     detail: (symbol: string) => `/stocks/${symbol}`,
-    summary: () => `/stocks/summary`,
+    summary: () => `/market/exchange-summary`,
     popular: () => `/stocks/popular`,
   },
-  
+
   // Warrants
   warrants: {
     list: (params?: {
@@ -107,7 +107,7 @@ export const endpoints = {
     issuers: () => `/warrants/issuers`,
     statistics: () => `/warrants/statistics`,
   },
-  
+
   // Market
   market: {
     overview: () => `/market/overview`,
@@ -129,7 +129,7 @@ export const endpoints = {
       if (params?.limit) query.append('limit', params.limit.toString());
       return `/market/top-losers${query.toString() ? '?' + query.toString() : ''}`;
     },
-    warrantTopVolume: (limit?: number) => 
+    warrantTopVolume: (limit?: number) =>
       `/market/warrant-top-volume${limit ? '?limit=' + limit : ''}`,
     warrantExpiringSoon: (maxDays?: number, limit?: number) => {
       const query = new URLSearchParams();
