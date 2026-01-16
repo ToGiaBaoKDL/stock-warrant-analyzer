@@ -1,0 +1,21 @@
+# Stock Warrant Analyzer - Backend Dependencies
+# Using SSI iBoard Query API (no auth required)
+
+# Web Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Data Validation
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# HTTP Client
+httpx>=0.26.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# Note: Removed vnstock, ssi-fc-data, redis (no longer needed)
+# - iBoard API doesn't require authentication
+# - No rate limit, so no caching needed
+# - Real-time data fetched directly from SSI iBoard
