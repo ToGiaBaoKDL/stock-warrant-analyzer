@@ -184,8 +184,13 @@ class IboardClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
                 base_url=self.BASE_URL,
-                headers=self.HEADERS,
-                timeout=self._timeout,
+                timeout=30.0,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "application/json, text/plain, */*",
+                    "Referer": "https://iboard.ssi.com.vn/",
+                    "Origin": "https://iboard.ssi.com.vn"
+                }
             )
         return self._client
     
