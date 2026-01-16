@@ -1,5 +1,5 @@
 export * from "./calculations";
-export { 
+export {
   formatVND,
   formatNumber,
   formatPercent,
@@ -12,3 +12,5 @@ export {
   formatCompactNumber,
   formatVolume,
 } from "./formatters";
+export * from "./exportUtils";
+

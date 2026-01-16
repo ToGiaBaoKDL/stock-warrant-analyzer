@@ -3,8 +3,8 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Layout, Typography, Card, Row, Col, Input, Skeleton, Tabs, Table, Space, Tag, Button, Select, Tooltip } from "antd";
-import { 
-  StockOutlined, 
+import {
+  StockOutlined,
   SearchOutlined,
   ReloadOutlined
 } from "@ant-design/icons";
@@ -14,6 +14,7 @@ import { apiClient, endpoints } from "@/lib/api-client";
 import { queryKeys, pollingIntervals } from "@/lib/query-client";
 import type { StockItem, StockListResponse, WarrantListResponse, WarrantItem, ExchangeSummary } from "@/types/api";
 import { formatVND, formatPercent, formatVolume } from "@/utils";
+import { ExportButtons } from "@/components";
 
 const { Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -30,7 +31,7 @@ const ExchangeTab = ({ exchange, label }: { exchange: string; label: string }) =
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
+
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['stocks', exchange],
     queryFn: async () => {
@@ -46,16 +47,16 @@ const ExchangeTab = ({ exchange, label }: { exchange: string; label: string }) =
   const filteredStocks = useMemo(() => {
     if (!data?.stocks) return [];
     let stocks = [...data.stocks];
-    
+
     // Filter by search
     if (search) {
       const searchUpper = search.toUpperCase();
-      stocks = stocks.filter(s => 
-        s.symbol.includes(searchUpper) || 
+      stocks = stocks.filter(s =>
+        s.symbol.includes(searchUpper) ||
         s.name.toLowerCase().includes(search.toLowerCase())
       );
     }
-    
+
     // Sort
     if (sortField) {
       stocks.sort((a, b) => {
@@ -64,7 +65,7 @@ const ExchangeTab = ({ exchange, label }: { exchange: string; label: string }) =
         return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
       });
     }
-    
+
     return stocks;
   }, [data?.stocks, search, sortField, sortOrder]);
 
@@ -194,11 +195,25 @@ const ExchangeTab = ({ exchange, label }: { exchange: string; label: string }) =
         >
           Làm mới
         </Button>
+        <ExportButtons
+          data={filteredStocks as unknown as Record<string, unknown>[]}
+          columns={[
+            { key: "symbol", title: "Mã" },
+            { key: "name", title: "Tên" },
+            { key: "current_price", title: "Giá" },
+            { key: "change_percent", title: "+/-" },
+            { key: "volume", title: "KL" },
+            { key: "ref_price", title: "Tham chiếu" },
+            { key: "ceiling", title: "Trần" },
+            { key: "floor", title: "Sàn" },
+          ]}
+          filename={`stocks_${exchange}`}
+        />
         <Text type="secondary">
           {filteredStocks.length} / {data?.total || 0} mã
         </Text>
       </div>
-      
+
       {/* Table */}
       <Table
         columns={columns}
@@ -231,7 +246,7 @@ const WarrantTab = () => {
   const [underlyingFilter, setUnderlyingFilter] = useState<string | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
+
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['warrants'],
     queryFn: async () => {
@@ -255,21 +270,21 @@ const WarrantTab = () => {
   const filteredWarrants = useMemo(() => {
     if (!data?.warrants) return [];
     let warrants = [...data.warrants];
-    
+
     // Filter by search
     if (search) {
       const searchUpper = search.toUpperCase();
-      warrants = warrants.filter(w => 
-        w.symbol.includes(searchUpper) || 
+      warrants = warrants.filter(w =>
+        w.symbol.includes(searchUpper) ||
         w.underlying_symbol.includes(searchUpper)
       );
     }
-    
+
     // Filter by underlying
     if (underlyingFilter) {
       warrants = warrants.filter(w => w.underlying_symbol === underlyingFilter);
     }
-    
+
     // Sort
     if (sortField) {
       warrants.sort((a, b) => {
@@ -278,7 +293,7 @@ const WarrantTab = () => {
         return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
       });
     }
-    
+
     return warrants;
   }, [data?.warrants, search, underlyingFilter, sortField, sortOrder]);
 
@@ -426,11 +441,26 @@ const WarrantTab = () => {
         <Button type="primary" onClick={() => router.push('/warrants')}>
           Screener chi tiết
         </Button>
+        <ExportButtons
+          data={filteredWarrants as unknown as Record<string, unknown>[]}
+          columns={[
+            { key: "symbol", title: "Mã CW" },
+            { key: "underlying_symbol", title: "CP mẹ" },
+            { key: "current_price", title: "Giá" },
+            { key: "change_percent", title: "+/-" },
+            { key: "volume", title: "KL" },
+            { key: "exercise_price", title: "Giá TH" },
+            { key: "exercise_ratio", title: "Tỷ lệ" },
+            { key: "maturity_date", title: "Ngày ĐH" },
+            { key: "days_to_maturity", title: "Còn lại" },
+          ]}
+          filename="warrants_list"
+        />
         <Text type="secondary">
           {filteredWarrants.length} / {data?.total || 0} CW
         </Text>
       </div>
-      
+
       {/* Table */}
       <Table
         columns={columns}
@@ -488,7 +518,7 @@ export default function Home() {
   const handleSearch = (value: string) => {
     const trimmed = value.trim().toUpperCase();
     if (!trimmed) return;
-    
+
     // Check if it's a warrant (starts with C)
     if (trimmed.startsWith('C') && trimmed.length > 4) {
       router.push(`/warrant/${trimmed}`);
@@ -555,7 +585,7 @@ export default function Home() {
             </div>
             <span className="text-white font-medium">Stock & Warrant Analyzer</span>
           </div>
-          
+
           {/* Search in header */}
           <div className="hidden md:block flex-1 max-w-md mx-8">
             <Input.Search
@@ -566,7 +596,7 @@ export default function Home() {
               allowClear
             />
           </div>
-          
+
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/warrants" className="text-gray-300 hover:text-white text-sm">
               CW Screener
@@ -577,7 +607,7 @@ export default function Home() {
           </nav>
         </div>
       </header>
-      
+
       <Content className="p-6">
         <div className="max-w-7xl mx-auto">
           {/* Market Summary Cards */}
@@ -620,7 +650,7 @@ export default function Home() {
           </Card>
         </div>
       </Content>
-      
+
       {/* Footer */}
       <Footer className="text-center bg-white border-t border-gray-100 py-4">
         <Text type="secondary" className="text-sm">
