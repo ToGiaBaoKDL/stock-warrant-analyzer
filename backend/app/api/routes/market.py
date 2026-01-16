@@ -1,3 +1,4 @@
+import asyncio
 """
 Market Overview API Routes - Using iBoard API
 """
@@ -281,28 +282,40 @@ async def get_warrants_expiring_soon(
 async def get_exchange_summary():
     """
     Get summary statistics for all exchanges
+    Fetched concurrently to reduce latency.
     """
     client = get_iboard_client()
+    exchanges = ["hose", "hnx", "upcom"]
     summaries = []
     
-    for exchange in ["hose", "hnx", "upcom"]:
-        try:
-            stocks = await client.get_stocks(exchange)
+    # Fetch all exchanges concurrently
+    tasks = [client.get_stocks(exchange) for exchange in exchanges]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    for i, exchange in enumerate(exchanges):
+        stocks_result = results[i]
+        
+        # Handle exceptions if any task failed
+        if isinstance(stocks_result, Exception):
+            logger.error(f"Error getting summary for {exchange}: {stocks_result}")
+            continue
             
-            advances = sum(1 for s in stocks if s.change_percent > 0)
-            declines = sum(1 for s in stocks if s.change_percent < 0)
-            unchanged = sum(1 for s in stocks if s.change_percent == 0)
+        stocks = stocks_result
+        if not stocks:
+            continue
             
-            summaries.append(ExchangeSummary(
-                exchange=exchange.upper(),
-                total_stocks=len(stocks),
-                total_volume=sum(s.volume for s in stocks),
-                total_value=sum(s.value for s in stocks),
-                advances=advances,
-                declines=declines,
-                unchanged=unchanged,
-            ))
-        except Exception as e:
-            logger.error(f"Error getting summary for {exchange}: {e}")
+        advances = sum(1 for s in stocks if s.change_percent > 0)
+        declines = sum(1 for s in stocks if s.change_percent < 0)
+        unchanged = sum(1 for s in stocks if s.change_percent == 0)
+        
+        summaries.append(ExchangeSummary(
+            exchange=exchange.upper(),
+            total_stocks=len(stocks),
+            total_volume=sum(s.volume for s in stocks),
+            total_value=sum(s.value for s in stocks),
+            advances=advances,
+            declines=declines,
+            unchanged=unchanged,
+        ))
     
     return summaries
