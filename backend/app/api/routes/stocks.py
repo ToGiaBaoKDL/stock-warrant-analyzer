@@ -119,55 +119,62 @@ async def get_stocks_by_exchange(
     """
     Get stocks for a specific exchange
     
-    - **exchange**: Exchange code (hose, hnx, upcom)
+    - **exchange**: Exchange code (hose, hnx, upcom, vn30)
     - **search**: Search by symbol or name
     - **sort_by**: Sort by field (volume, change_percent, value)
     - **sort_order**: Sort order (asc, desc)
     """
     client = get_iboard_client()
+    exchange_lower = exchange.lower()
     
-    if exchange.lower() not in ["hose", "hnx", "upcom"]:
-        raise HTTPException(status_code=400, detail="Invalid exchange. Must be hose, hnx, or upcom")
+    # Handle VN30 as special case
+    if exchange_lower == "vn30":
+        try:
+            stocks_data = await client.get_vn30_stocks()
+            stocks = [stock_data_to_item(s) for s in stocks_data]
+        except Exception as e:
+            logger.error(f"Error fetching VN30 stocks: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    elif exchange_lower not in ["hose", "hnx", "upcom"]:
+        raise HTTPException(status_code=400, detail="Invalid exchange. Must be hose, hnx, upcom, or vn30")
+    else:
+        try:
+            stocks_data = await client.get_stocks(exchange_lower)
+            stocks = [stock_data_to_item(s) for s in stocks_data]
+        except Exception as e:
+            logger.error(f"Error fetching stocks from {exchange}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
     
-    try:
-        stocks_data = await client.get_stocks(exchange.lower())
-        
-        stocks = [stock_data_to_item(s) for s in stocks_data]
-        
-        # Apply search
-        if search:
-            search_upper = search.upper()
-            search_lower = search.lower()
-            stocks = [
-                s for s in stocks
-                if search_upper in s.symbol or
-                   search_lower in s.name.lower() or
-                   search_lower in s.name_en.lower()
-            ]
-        
-        # Apply sorting
-        if sort_by:
-            reverse = sort_order != "asc"
-            if sort_by == "volume":
-                stocks.sort(key=lambda x: x.volume, reverse=reverse)
-            elif sort_by == "change_percent":
-                stocks.sort(key=lambda x: x.change_percent, reverse=reverse)
-            elif sort_by == "value":
-                stocks.sort(key=lambda x: x.value, reverse=reverse)
-        
-        # Apply limit
-        if limit and limit > 0:
-            stocks = stocks[:limit]
-        
-        return StockListResponse(
-            stocks=stocks,
-            total=len(stocks),
-            exchange=exchange.upper(),
-        )
-        
-    except Exception as e:
-        logger.error(f"Error fetching stocks from {exchange}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    # Apply search
+    if search:
+        search_upper = search.upper()
+        search_lower = search.lower()
+        stocks = [
+            s for s in stocks
+            if search_upper in s.symbol or
+               search_lower in s.name.lower() or
+               search_lower in s.name_en.lower()
+        ]
+    
+    # Apply sorting
+    if sort_by:
+        reverse = sort_order != "asc"
+        if sort_by == "volume":
+            stocks.sort(key=lambda x: x.volume, reverse=reverse)
+        elif sort_by == "change_percent":
+            stocks.sort(key=lambda x: x.change_percent, reverse=reverse)
+        elif sort_by == "value":
+            stocks.sort(key=lambda x: x.value, reverse=reverse)
+    
+    # Apply limit
+    if limit and limit > 0:
+        stocks = stocks[:limit]
+    
+    return StockListResponse(
+        stocks=stocks,
+        total=len(stocks),
+        exchange=exchange.upper(),
+    )
 
 
 
@@ -230,17 +237,6 @@ async def get_stock_detail(symbol: str):
     except Exception as e:
         logger.error(f"Error fetching detail for {symbol}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# Legacy endpoints for backward compatibility
-@router.get("/list", response_model=StockListResponse)
-async def get_stock_list_legacy(
-    exchange: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
-):
-    """Legacy endpoint - redirects to main endpoint"""
-    return await get_all_stocks(exchange=exchange, search=search)
-
 
 @router.get("/popular")
 async def get_popular_stocks():

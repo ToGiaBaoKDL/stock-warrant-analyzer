@@ -419,13 +419,3 @@ async def get_warrant_detail(symbol: str):
     except Exception as e:
         logger.error(f"Error fetching warrant {symbol}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# Legacy endpoints for backward compatibility
-@router.get("/list", response_model=WarrantListResponse)
-async def get_warrant_list_legacy(
-    underlying: Optional[str] = Query(None),
-    issuer: Optional[str] = Query(None),
-):
-    """Legacy endpoint - redirects to main endpoint"""
-    return await get_all_warrants(underlying=underlying, issuer=issuer)

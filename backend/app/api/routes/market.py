@@ -285,11 +285,16 @@ async def get_exchange_summary():
     Fetched concurrently to reduce latency.
     """
     client = get_iboard_client()
-    exchanges = ["hose", "hnx", "upcom"]
+    exchanges = ["hose", "hnx", "upcom", "vn30"]
     summaries = []
     
+    async def fetch_stocks(ex):
+        if ex == "vn30":
+            return await client.get_vn30_stocks()
+        return await client.get_stocks(ex)
+    
     # Fetch all exchanges concurrently
-    tasks = [client.get_stocks(exchange) for exchange in exchanges]
+    tasks = [fetch_stocks(exchange) for exchange in exchanges]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     
     for i, exchange in enumerate(exchanges):
