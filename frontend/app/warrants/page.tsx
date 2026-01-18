@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Layout,
   Card,
@@ -23,60 +24,55 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
-  ArrowLeftOutlined,
   WarningOutlined,
   CheckCircleOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
-  FilterOutlined,
   SortAscendingOutlined,
   DollarOutlined,
   NumberOutlined,
   StockOutlined
 } from "@ant-design/icons";
 import Link from "next/link";
-import { useWarrantsByUnderlying, useStockList } from "@/hooks";
+import { useWarrantsByUnderlying, useStockList, useWarrantCalculations } from "@/hooks";
+import type { WarrantTableRow, ProfitFilter, SortOption } from "@/hooks";
 import { useWarrantStore } from "@/stores";
 import {
-  calculateBreakEven,
   isNearExpiration,
   formatVND,
-  formatPercent,
-  DEFAULT_BUY_FEE_PERCENT,
-  DEFAULT_SELL_FEE_PERCENT,
-  DEFAULT_SELL_TAX_PERCENT
+  formatPercent
 } from "@/utils";
 import type { WarrantItem } from "@/types/api";
-import { ExportButtons } from "@/components";
+import { ExportButtons, MainNav, FeeSettingsButton } from "@/components";
 import type { ExportColumn } from "@/utils/exportUtils";
 
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
+const { Content } = Layout;
+const { Text } = Typography;
 
-interface WarrantTableRow extends WarrantItem {
-  breakEven: number;
-  isProfitable: boolean;
-  profitMargin: number;
-  profitMarginPercent: number;
-  estimatedProfit: number;
-  estimatedProfitPercent: number;
-  totalCost: number;
-  netRevenue: number;
-  leverage: number; // Đòn bẩy = Giá CP / (Giá CW * Tỷ lệ chuyển đổi)
-}
+// Note: WarrantTableRow type is now imported from @/hooks
 
-export default function WarrantsPage() {
+function WarrantsPageContent() {
   const {
     selectedUnderlying,
     setSelectedUnderlying,
     targetUnderlyingPrice,
-    setTargetUnderlyingPrice
+    setTargetUnderlyingPrice,
+    feeSettings
   } = useWarrantStore();
 
-  const [sortBy, setSortBy] = useState<string>("breakEven");
-  const [filterProfitable, setFilterProfitable] = useState<"all" | "profitable" | "unprofitable">("all");
+  const searchParams = useSearchParams();
+
+  // Handle URL param for auto-selecting underlying from What-if page
+  useEffect(() => {
+    const underlyingParam = searchParams.get('underlying');
+    if (underlyingParam && !selectedUnderlying) {
+      setSelectedUnderlying(underlyingParam);
+    }
+  }, [searchParams, selectedUnderlying, setSelectedUnderlying]);
+
+  const [sortBy, setSortBy] = useState<SortOption>("symbol");
+  const [filterProfitable, setFilterProfitable] = useState<ProfitFilter>("all");
   const [quantity, setQuantity] = useState<number>(1000);
-  const [minDaysToMaturity, setMinDaysToMaturity] = useState<number | null>(null);
 
   // Fetch warrants for selected underlying - includes underlying price and change info
   const { data: warrantsData, isLoading: warrantsLoading, isFetching, error: warrantsError, refetch } =
@@ -102,135 +98,17 @@ export default function WarrantsPage() {
     }));
   }, [stockListData]);
 
-  // Calculate break-even and profit for each warrant
-  const tableData: WarrantTableRow[] = useMemo(() => {
-    if (!warrantsData?.warrants) return [];
-
-    // Get underlying price from nested object
-    const underlyingPrice = warrantsData.underlying?.current_price || 0;
-    const target = targetUnderlyingPrice || underlyingPrice;
-
-    let data = warrantsData.warrants.map((warrant) => {
-      // Break-even calculation: CP cần đạt để CW hòa vốn nếu exercise
-      const breakEvenResult = calculateBreakEven(
-        warrant.current_price,
-        warrant.conversion_ratio,
-        warrant.exercise_price,
-        target
-      );
-
-      /**
-       * CORRECT Warrant Profit Calculation using Intrinsic Value method:
-       * 
-       * Intrinsic Value (at target price) = max(0, (TargetUnderlying - ExercisePrice) / ConversionRatio)
-       * 
-       * If exercise at maturity:
-       * - Settlement = IntrinsicValue per CW * Quantity
-       * 
-       * If sell CW before maturity (what-if analysis):
-       * - Estimated CW Price ≈ IntrinsicValue + TimeValue
-       * - TimeValue decays as expiry approaches (simplified: assume same time value ratio)
-       * 
-       * Best practice: Use intrinsic value change as base, then estimate market price
-       */
-
-      // Current intrinsic value
-      const currentIntrinsicValue = Math.max(0,
-        (underlyingPrice - warrant.exercise_price) / warrant.conversion_ratio
-      );
-
-      // Target intrinsic value
-      const targetIntrinsicValue = Math.max(0,
-        (target - warrant.exercise_price) / warrant.conversion_ratio
-      );
-
-      // Current time value = Current CW Price - Intrinsic Value
-      const currentTimeValue = Math.max(0, warrant.current_price - currentIntrinsicValue);
-
-      // Estimate CW price at target underlying price
-      // Time value is assumed to remain similar (or decay slightly based on days to maturity)
-      // This is a simplification - in reality, time value depends on volatility, time, etc.
-      const timeValueFactor = warrant.days_to_maturity > 30 ? 1.0 :
-        warrant.days_to_maturity > 14 ? 0.8 : 0.5;
-      const estimatedSellPrice = Math.max(0, targetIntrinsicValue + (currentTimeValue * timeValueFactor));
-
-      // Buy cost
-      const buyPrice = warrant.current_price;
-      const principal = buyPrice * quantity;
-      const buyFee = (principal * DEFAULT_BUY_FEE_PERCENT) / 100;
-      const totalCost = principal + buyFee;
-
-      // Revenue
-      const grossRevenue = estimatedSellPrice * quantity;
-      const sellFee = (grossRevenue * DEFAULT_SELL_FEE_PERCENT) / 100;
-      const sellTax = (grossRevenue * DEFAULT_SELL_TAX_PERCENT) / 100;
-      const netRevenue = grossRevenue - sellFee - sellTax;
-
-      // Profit
-      const estimatedProfit = netRevenue - totalCost;
-      const estimatedProfitPercent = totalCost > 0 ? (estimatedProfit / totalCost) * 100 : 0;
-
-      // Đòn bẩy = Giá CP / (Giá CW * Tỷ lệ chuyển đổi)
-      const leverage = warrant.current_price > 0 && warrant.conversion_ratio > 0
-        ? underlyingPrice / (warrant.current_price * warrant.conversion_ratio)
-        : 0;
-
-      return {
-        ...warrant,
-        breakEven: breakEvenResult.breakEvenPrice,
-        isProfitable: breakEvenResult.isProfitable,
-        profitMargin: breakEvenResult.profitMargin,
-        profitMarginPercent: breakEvenResult.profitMarginPercent,
-        estimatedProfit,
-        estimatedProfitPercent,
-        totalCost,
-        netRevenue,
-        leverage,
-      };
-    });
-
-    // Apply filter
-    if (filterProfitable === "profitable") {
-      data = data.filter(w => w.isProfitable);
-    } else if (filterProfitable === "unprofitable") {
-      data = data.filter(w => !w.isProfitable);
-    }
-
-    // Apply days to maturity filter
-    // Skip CWs with unknown days (days_to_maturity < 0) when filtering
-    if (minDaysToMaturity !== null) {
-      data = data.filter(w => w.days_to_maturity >= 0 && w.days_to_maturity >= minDaysToMaturity);
-    }
-
-    // Apply sort
-    // For expiry sort, put unknown days (< 0) at the end
-    if (sortBy === "breakEven") {
-      data.sort((a, b) => a.breakEven - b.breakEven);
-    } else if (sortBy === "margin") {
-      data.sort((a, b) => b.profitMarginPercent - a.profitMarginPercent);
-    } else if (sortBy === "expiry") {
-      data.sort((a, b) => {
-        // Put unknown days at the end
-        if (a.days_to_maturity < 0 && b.days_to_maturity >= 0) return 1;
-        if (b.days_to_maturity < 0 && a.days_to_maturity >= 0) return -1;
-        return a.days_to_maturity - b.days_to_maturity;
-      });
-    } else if (sortBy === "volume") {
-      data.sort((a, b) => b.volume - a.volume);
-    } else if (sortBy === "symbol") {
-      data.sort((a, b) => a.symbol.localeCompare(b.symbol));
-    }
-
-    return data;
-  }, [warrantsData, targetUnderlyingPrice, filterProfitable, sortBy, quantity, minDaysToMaturity]);
-
-  // Find best break-even warrant
-  const bestBreakEvenWarrant = useMemo(() => {
-    if (tableData.length === 0) return null;
-    return tableData.reduce((best, current) =>
-      current.breakEven < best.breakEven ? current : best
-      , tableData[0]);
-  }, [tableData]);
+  // Use extracted hook for all warrant calculations
+  const underlyingPrice = warrantsData?.underlying?.current_price || 0;
+  const { tableData, bestBreakEvenWarrant } = useWarrantCalculations({
+    warrants: warrantsData?.warrants,
+    underlyingPrice,
+    targetUnderlyingPrice,
+    feeSettings,
+    quantity,
+    filterProfitable,
+    sortBy,
+  });
 
   // Table columns
   const columns: ColumnsType<WarrantTableRow> = [
@@ -239,7 +117,7 @@ export default function WarrantsPage() {
       dataIndex: "symbol",
       key: "symbol",
       width: 110,
-      render: (symbol: string, record) => (
+      render: (symbol: string, record: WarrantTableRow) => (
         <Link href={`/analysis/${symbol}`}>
           <div className="flex flex-col gap-0.5">
             <Text strong className="text-[#CC785C] hover:text-[#b5654a]">{symbol}</Text>
@@ -314,12 +192,12 @@ export default function WarrantsPage() {
       ),
       dataIndex: "change_percent",
       key: "change_percent",
-      width: 70,
+      width: 80,
       align: "right",
       sorter: (a, b) => a.change_percent - b.change_percent,
       render: (changePercent: number) => (
         <Text className={`font-medium ${changePercent > 0 ? "text-green-600" : changePercent < 0 ? "text-red-600" : "text-gray-500"}`}>
-          {changePercent > 0 ? "+" : ""}{changePercent.toFixed(1)}%
+          {changePercent > 0 ? "+" : ""}{changePercent.toFixed(2)}%
         </Text>
       ),
     },
@@ -389,15 +267,8 @@ export default function WarrantsPage() {
       width: 130,
       align: "right",
       sorter: (a, b) => a.breakEven - b.breakEven,
-      render: (breakEven: number, record) => (
-        <div className={`px-2 py-1 rounded ${record.isProfitable ? "bg-green-50" : "bg-red-50"}`}>
-          <Text
-            strong
-            className={record.isProfitable ? "text-green-600" : "text-red-600"}
-          >
-            {formatVND(breakEven)}
-          </Text>
-        </div>
+      render: (breakEven: number) => (
+        <Text>{formatVND(breakEven)}</Text>
       ),
     },
     {
@@ -445,7 +316,7 @@ export default function WarrantsPage() {
       width: 120,
       align: "right",
       sorter: (a, b) => a.profitMarginPercent - b.profitMarginPercent,
-      render: (percent: number, record) => (
+      render: (percent: number, record: WarrantTableRow) => (
         <Space>
           {record.isProfitable ? (
             <CheckCircleOutlined className="text-green-500" />
@@ -468,7 +339,7 @@ export default function WarrantsPage() {
       key: "maturity_date",
       width: 120,
       sorter: (a, b) => a.days_to_maturity - b.days_to_maturity,
-      render: (date: string, record) => {
+      render: (date: string, record: WarrantTableRow) => {
         const hasValidExpiry = record.days_to_maturity >= 0;
         return (
           <div className="flex flex-col">
@@ -498,185 +369,147 @@ export default function WarrantsPage() {
 
   return (
     <Layout className="min-h-screen" style={{ background: '#F5F4EF' }}>
-      <Header className="h-14" style={{ background: "#191919" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-full">
-          <Link href="/" className="text-white mr-4 hover:text-[#CC785C] transition-colors">
-            <ArrowLeftOutlined className="text-lg" />
-          </Link>
-          <div className="w-7 h-7 rounded bg-[#CC785C] flex items-center justify-center mr-3">
-            <FilterOutlined className="text-white text-sm" />
-          </div>
-          <Title level={4} className="!text-white !mb-0 !font-medium">
-            Warrant Screener
-          </Title>
-        </div>
-      </Header>
+      <MainNav>
+        <FeeSettingsButton />
+      </MainNav>
 
       <Content className="p-6 min-h-screen">
         <div className="max-w-7xl mx-auto">
-          {/* Filter Header */}
-          <Card className="mb-4 shadow-lg border-0 sticky top-0 z-10 bg-white">
-            <Row gutter={[16, 16]} align="bottom" justify="space-between">
-              <Col xs={24} md={6}>
-                <div className="mb-2">
-                  <Text strong className="text-slate-600">
-                    <StockOutlined className="mr-1" /> Cổ phiếu mẹ
-                  </Text>
-                </div>
-                <Select
-                  showSearch
-                  placeholder="Chọn mã cổ phiếu..."
-                  value={selectedUnderlying}
-                  onChange={setSelectedUnderlying}
-                  options={underlyingOptions}
-                  className="w-full"
-                  size="large"
-                  filterOption={(input, option: any) => {
-                    const search = input.toUpperCase();
-                    return (
-                      option?.value?.toUpperCase().includes(search) ||
-                      option?.searchText?.includes(input.toLowerCase())
-                    );
-                  }}
-                />
-              </Col>
-
-              <Col xs={12} md={3}>
-                <div className="mb-2">
-                  <Text strong className="text-slate-600">
-                    <DollarOutlined className="mr-1" /> Giá kỳ vọng
-                  </Text>
-                </div>
-                <InputNumber
-                  size="large"
-                  placeholder={warrantsData?.underlying ? `Hiện tại: ${formatVND(warrantsData.underlying.current_price)}` : "Nhập giá mục tiêu"}
-                  value={targetUnderlyingPrice}
-                  onChange={(value) => setTargetUnderlyingPrice(value)}
-                  className="w-full"
-                  min={0}
-                  step={100}
-                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  parser={(value) => Number(value?.replace(/,/g, ""))}
-                />
-              </Col>
-
-              <Col xs={12} md={3}>
-                <div className="mb-2">
-                  <Text strong className="text-slate-600">
-                    <NumberOutlined className="mr-1" /> Khối lượng
-                  </Text>
-                </div>
-                <InputNumber
-                  size="large"
-                  placeholder="Số lượng CW"
-                  value={quantity}
-                  onChange={(value) => value && setQuantity(value)}
-                  className="w-full"
-                  min={100}
-                  step={100}
-                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  parser={(value) => Number(value?.replace(/,/g, ""))}
-                />
-              </Col>
-
-              <Col xs={24} md={6}>
-                {warrantsData?.underlying && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <Text type="secondary" className="text-xs block mb-1">Giá hiện tại {selectedUnderlying}</Text>
-                    <div className="flex items-baseline gap-2">
-                      <Text strong className="text-lg">{formatVND(warrantsData.underlying.current_price)}</Text>
-                      <Text className={`text-base font-semibold ${(warrantsData.underlying.change ?? 0) > 0 ? "text-green-600" :
-                          (warrantsData.underlying.change ?? 0) < 0 ? "text-red-600" : "text-gray-500"
-                        }`}>
-                        {(warrantsData.underlying.change_percent ?? 0) > 0 ? "+" : ""}{formatPercent(warrantsData.underlying.change_percent ?? 0)}
-                      </Text>
+          {/* Filter Toolbar */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 sticky top-16 z-10">
+            <div className="flex flex-col gap-4">
+              {/* Top Row: Inputs & Actions */}
+              <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-end">
+                {/* Inputs Group */}
+                <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto flex-1">
+                  <div className="w-full sm:w-80">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      Cổ phiếu mẹ
                     </div>
+                    <Select
+                      showSearch
+                      placeholder="Chọn mã..."
+                      value={selectedUnderlying}
+                      onChange={setSelectedUnderlying}
+                      options={underlyingOptions}
+                      className="w-full"
+                      size="large"
+                      filterOption={(input, option) =>
+                        (option?.value as string)?.toUpperCase().includes(input.toUpperCase()) ?? false
+                      }
+                    />
                   </div>
-                )}
-              </Col>
 
-              <Col xs={24} md={4}>
-                <Button
-                  icon={<ReloadOutlined spin={isFetching} />}
-                  onClick={() => refetch()}
-                  size="large"
-                  className="w-full"
-                >
-                  Làm mới
-                </Button>
-              </Col>
-              <Col xs={24} md={2}>
-                <ExportButtons
-                  data={tableData as unknown as Record<string, unknown>[]}
-                  columns={[
-                    { key: "symbol", title: "Mã CW" },
-                    { key: "issuer_name", title: "TCPH" },
-                    { key: "current_price", title: "Giá CW" },
-                    { key: "volume", title: "KL GD" },
-                    { key: "exercise_price", title: "Giá TH" },
-                    { key: "conversion_ratio", title: "Tỷ lệ CĐ" },
-                    { key: "breakEven", title: "Break-even" },
-                    { key: "days_to_maturity", title: "Ngày còn lại" },
-                    { key: "estimatedProfit", title: "LN ước tính" },
-                  ]}
-                  filename={`warrant_screener_${selectedUnderlying || "all"}`}
-                  size="large"
-                />
-              </Col>
-            </Row>
+                  <div className="w-full sm:w-22">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      Giá kỳ vọng
+                    </div>
+                    <InputNumber
+                      size="large"
+                      placeholder={warrantsData?.underlying ? `${formatVND(warrantsData.underlying.current_price)}` : "Nhập giá..."}
+                      value={targetUnderlyingPrice}
+                      onChange={setTargetUnderlyingPrice}
+                      className="w-full"
+                      min={0}
+                      step={100}
+                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      parser={(value) => Number(value?.replace(/,/g, ""))}
+                    />
+                  </div>
 
-            {/* Filter & Sort Options */}
-            {selectedUnderlying && warrantsData && warrantsData.warrants.length > 0 && !isInitialLoading && (
-              <>
-                <div className="border-t border-slate-100 mt-4 pt-4">
-                  <Row gutter={16} align="middle">
-                    <Col>
-                      <Text type="secondary" className="mr-2">Lọc:</Text>
-                      <Segmented
-                        options={[
-                          { value: "all", label: "Tất cả" },
-                          { value: "profitable", label: "✅ Có lãi" },
-                          { value: "unprofitable", label: "❌ Lỗ" },
-                        ]}
-                        value={filterProfitable}
-                        onChange={(value) => setFilterProfitable(value as typeof filterProfitable)}
-                      />
-                    </Col>
-                    <Col>
-                      <Text type="secondary" className="mr-2 ml-4">Sắp xếp:</Text>
-                      <Segmented
-                        options={[
-                          { value: "symbol", label: "Mã CW" },
-                          { value: "breakEven", label: <span><SortAscendingOutlined /> Break-even</span> },
-                          { value: "margin", label: "Biên LN" },
-                          { value: "volume", label: "Khối lượng" },
-                          { value: "expiry", label: "Đáo hạn" },
-                        ]}
-                        value={sortBy}
-                        onChange={(value) => setSortBy(value as string)}
-                      />
-                    </Col>
-                    <Col>
-                      <Text type="secondary" className="mr-2 ml-4">Tối thiểu:</Text>
-                      <Select
-                        value={minDaysToMaturity}
-                        onChange={setMinDaysToMaturity}
-                        className="w-32"
-                        placeholder="Ngày còn lại"
-                        allowClear
-                        options={[
-                          { value: 7, label: "≥ 7 ngày" },
-                          { value: 14, label: "≥ 14 ngày" },
-                          { value: 30, label: "≥ 30 ngày" },
-                          { value: 60, label: "≥ 60 ngày" },
-                        ]}
-                      />
-                    </Col>
-                  </Row>
+                  <div className="w-full sm:w-40">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      Khối lượng
+                    </div>
+                    <InputNumber
+                      size="large"
+                      placeholder="Min Volume"
+                      value={quantity}
+                      onChange={(v) => v && setQuantity(v)}
+                      className="w-full"
+                      min={100}
+                      step={100}
+                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      parser={(value) => Number(value?.replace(/,/g, ""))}
+                    />
+                  </div>
                 </div>
-              </>
-            )}
-          </Card>
+
+                {/* Right Side: Current Price & Actions */}
+                <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+                  {warrantsData?.underlying && (
+                    <div className="px-4 py-2 bg-gray-50 rounded-lg border border-gray-100 flex flex-col items-end mr-2">
+                      <span className="text-[10px] text-gray-400 font-medium uppercase">Hiện tại</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-800">{formatVND(warrantsData.underlying.current_price)}</span>
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${(warrantsData.underlying.change ?? 0) >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          }`}>
+                          {(warrantsData.underlying.change_percent ?? 0) > 0 ? "+" : ""}{formatPercent(warrantsData.underlying.change_percent ?? 0)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    icon={<ReloadOutlined spin={isFetching} />}
+                    onClick={() => refetch()}
+                    size="large"
+                    className="!flex items-center"
+                  />
+
+                  <ExportButtons
+                    data={tableData as unknown as Record<string, unknown>[]}
+                    columns={[
+                      { key: "symbol", title: "Mã CW" },
+                      { key: "issuer_name", title: "TCPH" },
+                      { key: "current_price", title: "Giá CW" },
+                      { key: "volume", title: "KL GD" },
+                      { key: "exercise_price", title: "Giá TH" },
+                      { key: "conversion_ratio", title: "Tỷ lệ CĐ" },
+                      { key: "breakEven", title: "Break-even" },
+                      { key: "days_to_maturity", title: "Ngày còn lại" },
+                      { key: "estimatedProfit", title: "LN ước tính" },
+                    ]}
+                    filename={`warrant_screener_${selectedUnderlying || "all"}`}
+                    size="large"
+                  />
+                </div>
+              </div>
+
+              {selectedUnderlying && warrantsData && warrantsData.warrants.length > 0 && !isInitialLoading && (
+                <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-400 font-medium">Bộ lọc:</span>
+                    <Segmented
+                      size="middle"
+                      options={[
+                        { value: "all", label: "Tất cả" },
+                        { value: "profitable", label: "Có lãi" },
+                        { value: "unprofitable", label: "Lỗ" },
+                      ]}
+                      value={filterProfitable}
+                      onChange={(value) => setFilterProfitable(value as typeof filterProfitable)}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-400 font-medium">Sắp xếp:</span>
+                    <Segmented
+                      size="middle"
+                      options={[
+                        { value: "symbol", label: "Mã CW" },
+                        { value: "breakEven", label: "Break-even" },
+                        { value: "margin", label: "Biên LN" },
+                        { value: "expiry", label: "Đáo hạn" },
+                      ]}
+                      value={sortBy}
+                      onChange={(value) => setSortBy(value as SortOption)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Content */}
           {!selectedUnderlying ? (
@@ -792,9 +625,7 @@ export default function WarrantsPage() {
                       pageSizeOptions: ["10", "15", "25", "50"],
                       showTotal: (total) => `Tổng ${total} chứng quyền`
                     }}
-                    rowClassName={(record) =>
-                      record.isProfitable ? "bg-green-50 hover:bg-green-100" : "hover:bg-slate-50"
-                    }
+                    rowClassName={() => "hover:bg-slate-50"}
                     size="middle"
                   />
                 </div>
@@ -805,9 +636,9 @@ export default function WarrantsPage() {
                 <Row gutter={[16, 16]}>
                   <Col xs={24} sm={12} lg={6}>
                     <div className="bg-[#F5F4EF] rounded-lg p-4 h-full">
-                      <Text className="text-xs text-gray-500 block mb-1">Màu nền xanh</Text>
+                      <Text className="text-xs text-gray-500 block mb-1">Lợi nhuận xanh</Text>
                       <Text strong className="font-mono text-sm block mb-2">CW có lãi</Text>
-                      <Text type="secondary" className="text-xs">Break-even &lt; Giá kỳ vọng</Text>
+                      <Text type="secondary" className="text-xs">Ô lợi nhuận được tô màu xanh</Text>
                     </div>
                   </Col>
                   <Col xs={24} sm={12} lg={6}>
@@ -827,7 +658,7 @@ export default function WarrantsPage() {
                   <Col xs={24} sm={12} lg={6}>
                     <div className="bg-[#F5F4EF] rounded-lg p-4 h-full">
                       <Text className="text-xs text-gray-500 block mb-1">Phí & Thuế</Text>
-                      <Text strong className="font-mono text-sm block mb-2">{DEFAULT_BUY_FEE_PERCENT}% + {DEFAULT_SELL_FEE_PERCENT}% + {DEFAULT_SELL_TAX_PERCENT}%</Text>
+                      <Text strong className="font-mono text-sm block mb-2">{feeSettings.buyFeePercent}% + {feeSettings.sellFeePercent}% + {feeSettings.sellTaxPercent}%</Text>
                       <Text type="secondary" className="text-xs">Phí mua + Phí bán + Thuế bán</Text>
                     </div>
                   </Col>
@@ -889,5 +720,25 @@ export default function WarrantsPage() {
         </div>
       </Content>
     </Layout>
+  );
+}
+
+// Wrapper with Suspense for useSearchParams
+export default function WarrantsPage() {
+  return (
+    <Suspense fallback={
+      <Layout className="min-h-screen" style={{ background: '#F5F4EF' }}>
+        <MainNav />
+        <Content className="p-4 lg:p-6">
+          <div className="max-w-7xl mx-auto">
+            <Card className="animate-pulse">
+              <div className="h-64 bg-gray-200 rounded" />
+            </Card>
+          </div>
+        </Content>
+      </Layout>
+    }>
+      <WarrantsPageContent />
+    </Suspense>
   );
 }
