@@ -51,29 +51,6 @@ export function formatDate(dateString: string): string {
 }
 
 /**
- * Format date to relative time (e.g., "15 days left")
- */
-export function formatDaysRemaining(days: number): string {
-  if (days <= 0) {
-    return "Đã đáo hạn";
-  }
-  if (days === 1) {
-    return "1 ngày";
-  }
-  return `${days} ngày`;
-}
-
-
-
-/**
- * Truncate text with ellipsis
- */
-export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength)}...`;
-}
-
-/**
  * Format large numbers with K, M, B suffixes
  */
 export function formatCompactNumber(value: number): string {

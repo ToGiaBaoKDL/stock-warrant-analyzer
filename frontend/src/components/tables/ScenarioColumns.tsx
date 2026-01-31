@@ -60,8 +60,8 @@ const ProfitCell = React.memo(function ProfitCell({
     isProfit: boolean;
 }) {
     const bgClass = isProfit
-        ? "!bg-green-100 !text-green-700 !border-green-300 dark:!bg-green-900/40 dark:!text-green-400 dark:!border-green-800"
-        : "!bg-red-100 !text-red-700 !border-red-300 dark:!bg-red-900/40 dark:!text-red-400 dark:!border-red-800";
+        ? "!bg-emerald-500 !text-white !border-emerald-600 dark:!bg-emerald-900/40 dark:!text-emerald-300 dark:!border-emerald-700"
+        : "!bg-rose-500 !text-white !border-rose-600 dark:!bg-rose-900/40 dark:!text-rose-300 dark:!border-rose-700";
 
     return (
         <div

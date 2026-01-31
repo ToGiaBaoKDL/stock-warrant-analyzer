@@ -35,9 +35,9 @@ const RESOLUTION_OPTIONS = [
 ];
 
 const CHART_TYPES = [
-    { value: "candlestick", label: "Nến" },
-    { value: "line", label: "Đường" },
-    { value: "area", label: "Vùng" },
+    { value: "candlestick" as const, label: "Nến" },
+    { value: "line" as const, label: "Đường" },
+    { value: "area" as const, label: "Vùng" },
 ];
 
 /**
@@ -71,7 +71,7 @@ export const StockChartTab = React.memo(function StockChartTab({
         setDays(undefined); // Reset immediately: critical for avoiding huge data requests on small resolutions
     };
 
-    const handleChartTypeChange = (val: any) => {
+    const handleChartTypeChange = (val: "candlestick" | "line" | "area") => {
         setChartType(val);
     };
 
@@ -157,7 +157,6 @@ export const StockChartTab = React.memo(function StockChartTab({
 
                         // Only update if we haven't reached cap
                         if (next > current) {
-                            console.log(`[StockChart] Fetching history: ${next} days (Max: ${maxBackFill})`);
                             return next;
                         }
                         return current;

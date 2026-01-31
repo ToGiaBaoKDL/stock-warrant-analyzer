@@ -62,21 +62,6 @@ export function calculateFees(
   };
 }
 
-/**
- * Calculate sell tax (0.1% of sell value)
- *
- * @param sellValue - Total sell value (price * quantity)
- * @param taxPercent - Tax percentage (default 0.1%)
- */
-export function calculateTax(
-  sellValue: number,
-  taxPercent: number = DEFAULT_SELL_TAX_PERCENT
-): TaxCalculation {
-  return {
-    sellTax: (sellValue * taxPercent) / 100,
-  };
-}
-
 // ============================================
 // Cost & Revenue Calculations
 // ============================================

@@ -2,7 +2,6 @@ import type { DefaultOptionType } from "antd/es/select";
 
 /**
  * Type-safe filter option handler for Ant Design Select
- * Use this to replace filterOption={(input, option: any) => ...}
  */
 export function createFilterOption(
     key: keyof DefaultOptionType = "value"
@@ -16,13 +15,3 @@ export function createFilterOption(
         return false;
     };
 }
-
-/**
- * Simple filter option for Select with value matching
- */
-export const filterOptionByValue = createFilterOption("value");
-
-/**
- * Filter option for Select with label matching
- */
-export const filterOptionByLabel = createFilterOption("label");

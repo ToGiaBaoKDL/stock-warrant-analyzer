@@ -84,11 +84,8 @@ export const CapDividendTab = React.memo(function CapDividendTab({
         const effectiveWidth = containerWidth || 500;
 
         if (!data) {
-            console.log("[CapDividend] No data");
             return;
         }
-
-        console.log("[CapDividend] Drawing Asset Chart. Width:", effectiveWidth, "Assets:", data.assetList?.length);
 
         if (!assetCanvasRef.current || !data?.assetList || data.assetList.length === 0) return;
 
@@ -207,7 +204,6 @@ export const CapDividendTab = React.memo(function CapDividendTab({
         const effectiveWidth = containerWidth || 500;
 
         if (!data) return;
-        console.log("[CapDividend] Drawing Dividend Chart. Width:", effectiveWidth);
 
         if (!dividendCanvasRef.current || !data?.cashDividendList || data.cashDividendList.length === 0) return;
 

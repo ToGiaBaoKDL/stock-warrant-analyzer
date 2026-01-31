@@ -9,3 +9,6 @@ export { SubsidiariesTab } from "./SubsidiariesTab";
 export { LeadershipTab } from "./LeadershipTab";
 export { ShareholdersTab } from "./ShareholdersTab";
 export { CapDividendTab } from "./CapDividendTab";
+
+// Position & Scenario components
+export { PositionForm, QuickPresets, ScenarioInput } from "./PositionForm";

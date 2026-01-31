@@ -259,17 +259,14 @@ export const StockTable = React.memo(function StockTable({
                     style={{ width: 200 }}
                     allowClear
                 />
-                <div className="relative inline-block w-[140px]">
-                    <Select
-                        placeholder="Sắp xếp"
-                        style={{ width: '100%' }}
-                        allowClear
-                        value={sortField}
-                        onChange={handleSortChange}
-                        options={SORT_OPTIONS}
-                        className="w-full [&.ant-select-single_.ant-select-selector]:!pl-9"
-                    />
-                </div>
+                <Select
+                    placeholder="Sắp xếp"
+                    style={{ width: 140 }}
+                    allowClear
+                    value={sortField}
+                    onChange={handleSortChange}
+                    options={SORT_OPTIONS}
+                />
                 <Button
                     icon={<ReloadOutlined spin={isFetching} />}
                     onClick={() => refetch()}

@@ -4,8 +4,6 @@ export {
   formatNumber,
   formatPercent,
   formatDate,
-  formatDaysRemaining,
-  truncateText,
   formatCompactNumber,
   formatVolume,
 } from "./formatters";
@@ -17,15 +15,9 @@ export {
   getPositionColorHex,
   type PricePosition
 } from "./priceColor";
-export {
-  createFilterOption,
-  filterOptionByValue,
-  filterOptionByLabel,
-} from "./filterOption";
+export { createFilterOption } from "./filterOption";
 export {
   isMarketOpen,
   getPollingInterval,
   getRefetchInterval,
-  getTimeUntilMarketOpen,
-  getMarketStatusText,
 } from "./tradingHours";

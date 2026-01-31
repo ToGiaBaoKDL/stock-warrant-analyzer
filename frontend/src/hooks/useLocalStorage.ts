@@ -67,18 +67,3 @@ export function useLocalStorage<T>(
 
     return [storedValue, setValue, removeValue];
 }
-
-/**
- * Simplified hook for boolean flags
- */
-export function useLocalStorageBoolean(
-    key: string,
-    initialValue: boolean = false
-): [boolean, () => void, () => void] {
-    const [value, setValue] = useLocalStorage(key, initialValue);
-
-    const setTrue = useCallback(() => setValue(true), [setValue]);
-    const setFalse = useCallback(() => setValue(false), [setValue]);
-
-    return [value, setTrue, setFalse];
-}

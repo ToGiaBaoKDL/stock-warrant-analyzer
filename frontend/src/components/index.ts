@@ -1,6 +1,5 @@
 // Components exports
 export * from "./ErrorBoundary";
-export * from "./ErrorBoundary";
 export * from "./ExportButtons";
 export * from "./MainNav";
 export * from "./FeeSettingsModal";
@@ -23,6 +22,9 @@ export * from './tables';
 
 // Card components
 export * from './cards';
+
+// Warrant components
+export * from './warrants';
 
 // Providers
 export { QueryProvider } from './providers/QueryProvider';

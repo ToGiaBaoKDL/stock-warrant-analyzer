@@ -6,15 +6,9 @@ export {
   type UseStockHistoryOptions
 } from "./useStockHistory";
 export { useWarrantInfo, useWarrantsByUnderlying, useWarrantList } from "./useWarrants";
-export {
-  useBreakEven,
-  useProfitLoss,
-  useExerciseValue,
-  useWarrantAnalysis,
-} from "./useCalculations";
 
 // New hooks
-export { useLocalStorage, useLocalStorageBoolean } from "./useLocalStorage";
+export { useLocalStorage } from "./useLocalStorage";
 export {
   useWarrantCalculations,
   type WarrantTableRow,

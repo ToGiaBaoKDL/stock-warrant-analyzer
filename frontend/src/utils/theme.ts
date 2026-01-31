@@ -30,34 +30,3 @@ export const AppColors = {
     floor: "var(--color-floor)",     // cyan
     ref: "var(--color-ref)",         // yellow/amber
 } as const;
-
-export const AppDimensions = {
-    maxContentWidth: "max-w-7xl",
-    headerHeight: "64px",
-} as const;
-
-/**
- * Color class helpers for consistent theming
- */
-export const ThemeClasses = {
-    // Card backgrounds
-    card: "bg-white dark:bg-gray-800",
-    cardHover: "hover:bg-gray-50 dark:hover:bg-gray-700",
-    
-    // Text
-    textPrimary: "text-gray-900 dark:text-gray-100",
-    textSecondary: "text-gray-600 dark:text-gray-400",
-    textMuted: "text-gray-400 dark:text-gray-500",
-    
-    // Borders
-    border: "border-gray-200 dark:border-gray-700",
-    
-    // Inputs
-    input: "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600",
-    
-    // Profit/Loss
-    profitBg: "bg-green-50 dark:bg-green-900/20",
-    profitText: "text-green-600 dark:text-green-400",
-    lossBg: "bg-red-50 dark:bg-red-900/20",
-    lossText: "text-red-600 dark:text-red-400",
-} as const;
