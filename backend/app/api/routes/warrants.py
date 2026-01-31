@@ -6,7 +6,7 @@ from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query
 import logging
 
-from app.services.iboard_client import get_iboard_client, WarrantData, UnderlyingData
+from app.services.iboard_client import get_iboard_client
 from app.schemas.warrant import (
     WarrantItem,
     UnderlyingInfo,
@@ -19,70 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/warrants", tags=["warrants"])
 
 
-def warrant_data_to_item(w: WarrantData, underlying_dict: dict = None) -> WarrantItem:
-    """Convert WarrantData dataclass to WarrantItem schema"""
-    # Get underlying price from dict if available
-    underlying_price = 0.0
-    underlying_change = 0.0
-    underlying_change_percent = 0.0
-    
-    if underlying_dict and w.underlying_symbol in underlying_dict:
-        u = underlying_dict[w.underlying_symbol]
-        underlying_price = u.current_price
-        underlying_change = u.change
-        underlying_change_percent = u.change_percent
-    
-    return WarrantItem(
-        symbol=w.symbol,
-        underlying_symbol=w.underlying_symbol,
-        issuer_name=w.issuer_name,
-        warrant_type=w.warrant_type,
-        current_price=w.current_price,
-        ref_price=w.ref_price,
-        ceiling=w.ceiling,
-        floor=w.floor,
-        open_price=w.open_price,
-        high_price=w.high_price,
-        low_price=w.low_price,
-        avg_price=w.avg_price,
-        change=w.change,
-        change_percent=w.change_percent,
-        volume=w.volume,
-        value=w.value,
-        exercise_price=w.exercise_price,
-        exercise_ratio=w.exercise_ratio,
-        maturity_date=w.maturity_date,
-        last_trading_date=w.last_trading_date,
-        days_to_maturity=w.days_to_maturity,
-        bid1_price=w.bid1_price,
-        bid1_vol=w.bid1_vol,
-        bid2_price=w.bid2_price,
-        bid2_vol=w.bid2_vol,
-        bid3_price=w.bid3_price,
-        bid3_vol=w.bid3_vol,
-        ask1_price=w.ask1_price,
-        ask1_vol=w.ask1_vol,
-        ask2_price=w.ask2_price,
-        ask2_vol=w.ask2_vol,
-        ask3_price=w.ask3_price,
-        ask3_vol=w.ask3_vol,
-        foreign_remain=w.foreign_remain,
-        session=w.session,
-        trading_date=w.trading_date,
-    )
 
-
-def underlying_data_to_info(u: UnderlyingData) -> UnderlyingInfo:
-    """Convert UnderlyingData dataclass to UnderlyingInfo schema"""
-    return UnderlyingInfo(
-        symbol=u.symbol,
-        current_price=u.current_price,
-        ref_price=u.ref_price,
-        ceiling=u.ceiling,
-        floor=u.floor,
-        change=u.change,
-        change_percent=u.change_percent,
-    )
 
 
 @router.get("/", response_model=WarrantListResponse)
@@ -121,11 +58,8 @@ async def get_all_warrants(
         else:
             data = await client.get_all_warrants()
         
-        warrants_data = data['warrants']
-        underlying_data = list(data['underlying'].values())
-        
-        warrants = [warrant_data_to_item(w, data['underlying']) for w in warrants_data]
-        underlying_list = [underlying_data_to_info(u) for u in underlying_data]
+        warrants = list(data['warrants'])
+        underlying_list = list(data['underlying'].values())
         
         # Apply filters
         if underlying:
@@ -218,24 +152,11 @@ async def get_warrants_by_underlying(
     
     try:
         data = await client.get_warrants_by_underlying(symbol.upper())
-        
         warrants_data = data['warrants']
-        underlying_info_data = data.get('underlying_info')
+        underlying_info = data.get('underlying_info')
         
-        # Create underlying dict for conversion
-        underlying_dict = {}
-        if underlying_info_data:
-            underlying_dict[symbol.upper()] = underlying_info_data
-        
-        # If no warrants found, return empty list instead of error
-        warrants = []
-        if warrants_data:
-            warrants = [warrant_data_to_item(w, underlying_dict) for w in warrants_data]
-        
-        # Convert underlying info
-        underlying_info = None
-        if underlying_info_data:
-            underlying_info = underlying_data_to_info(underlying_info_data)
+        # iboard_client returns WarrantItem directly - use as-is
+        warrants = list(warrants_data) if warrants_data else []
         
         # Apply sorting
         if sort_by:
@@ -274,9 +195,8 @@ async def get_underlying_list():
     try:
         # Get all warrants to extract underlying data
         data = await client.get_all_warrants()
-        underlying_data = list(data['underlying'].values())
-        
-        underlying_list = [underlying_data_to_info(u) for u in underlying_data]
+        # iboard_client returns UnderlyingInfo directly - use as-is
+        underlying_list = list(data['underlying'].values())
         
         return {
             "underlying_stocks": underlying_list,
@@ -393,21 +313,9 @@ async def get_warrant_detail(symbol: str):
                 status_code=404,
                 detail=f"Warrant {symbol} not found"
             )
-        
-        warrant_data = data['warrant']
-        underlying_info_data = data.get('underlying_info')
-        
-        # Create underlying dict for conversion
-        underlying_dict = {}
-        if underlying_info_data:
-            underlying_dict[warrant_data.underlying_symbol] = underlying_info_data
-        
-        warrant = warrant_data_to_item(warrant_data, underlying_dict)
-        
-        # Convert underlying info
-        underlying_info = None
-        if underlying_info_data:
-            underlying_info = underlying_data_to_info(underlying_info_data)
+        # iboard_client returns WarrantItem/UnderlyingInfo directly
+        warrant = data['warrant']
+        underlying_info = data.get('underlying_info')
         
         return WarrantDetailResponse(
             warrant=warrant,

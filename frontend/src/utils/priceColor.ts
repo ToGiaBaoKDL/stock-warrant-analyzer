@@ -1,50 +1,82 @@
 /**
  * Price color utilities
  * Centralized color logic for stock/warrant price changes
+ * 
+ * Vietnam Stock Market Color Convention:
+ * - Ceiling: Purple (#9333ea) - max daily price increase
+ * - Up: Green (#16a34a) - positive change
+ * - Reference: Yellow (#ca8a04) - no change
+ * - Down: Red (#dc2626) - negative change  
+ * - Floor: Cyan (#0891b2) - max daily price decrease
  */
 
-export type PriceColorType = "positive" | "negative" | "neutral";
+import { AppColors } from "@/utils/theme";
 
 /**
- * Determine color type based on numeric change
+ * Price position relative to reference price
  */
-export function getPriceColorType(change: number): PriceColorType {
-    if (change > 0) return "positive";
-    if (change < 0) return "negative";
-    return "neutral";
+export type PricePosition = "ceiling" | "up" | "ref" | "down" | "floor";
+
+/**
+ * Determine price position based on current price and reference points
+ * 
+ * @param currentPrice - Current trading price
+ * @param refPrice - Reference price (previous close)
+ * @param ceilingPrice - Ceiling price (max +7%)
+ * @param floorPrice - Floor price (min -7%)
+ */
+export function getPricePosition(
+    currentPrice: number,
+    refPrice: number,
+    ceilingPrice?: number,
+    floorPrice?: number
+): PricePosition {
+    if (ceilingPrice && currentPrice >= ceilingPrice) return "ceiling";
+    if (floorPrice && currentPrice <= floorPrice) return "floor";
+    if (currentPrice > refPrice) return "up";
+    if (currentPrice < refPrice) return "down";
+    return "ref";
 }
 
 /**
- * Get Tailwind CSS class for price change color
- * Uses !important to override Ant Design default link styles
+ * Get color hex for a price position
  */
-export function getPriceColorClass(change: number): string {
-    if (change > 0) return "!text-green-600";
-    if (change < 0) return "!text-red-600";
-    return "!text-yellow-600";
+export function getPositionColorHex(position: PricePosition): string {
+    switch (position) {
+        case "ceiling": return "var(--color-ceiling)";
+        case "up": return "var(--color-up)";
+        case "ref": return "var(--color-ref)";
+        case "down": return "var(--color-down)";
+        case "floor": return "var(--color-floor)";
+    }
 }
 
 /**
- * Get inline style color for price change
- * Use when Tailwind classes don't work (e.g., in Table Cell)
+ * Get color hex based on price change (simple version)
+ * - Positive: Green
+ * - Zero: Yellow
+ * - Negative: Red
  */
 export function getPriceColorHex(change: number): string {
-    if (change > 0) return "#16a34a"; // green-600
-    if (change < 0) return "#dc2626"; // red-600
-    return "#ca8a04"; // yellow-600
+    if (change > 0) return "var(--color-up)";
+    if (change < 0) return "var(--color-down)";
+    return "var(--color-ref)";
 }
 
 /**
- * Get background color class for profit/loss badges
+ * Get full price color considering ceiling/floor limits
+ * 
+ * @param currentPrice - Current trading price
+ * @param refPrice - Reference price
+ * @param ceilingPrice - Ceiling price (optional)
+ * @param floorPrice - Floor price (optional)
  */
-export function getProfitBgClass(isProfit: boolean): string {
-    return isProfit ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
-}
-
-/**
- * Format percentage with sign
- */
-export function formatPercentWithSign(value: number, decimals: number = 2): string {
-    const formatted = value.toFixed(decimals);
-    return value > 0 ? `+${formatted}%` : `${formatted}%`;
+export function getFullPriceColorHex(
+    currentPrice: number,
+    refPrice: number,
+    ceilingPrice?: number,
+    floorPrice?: number
+): string {
+    const position = getPricePosition(currentPrice, refPrice, ceilingPrice, floorPrice);
+    return getPositionColorHex(position);
 }

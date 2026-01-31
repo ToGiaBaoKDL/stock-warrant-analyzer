@@ -17,7 +17,8 @@ import {
   Divider,
   Select,
   Collapse,
-  Popconfirm
+  Popconfirm,
+  Tabs
 } from "antd";
 import {
   PlusOutlined,
@@ -45,6 +46,7 @@ import type { ScenarioRow } from "@/types";
 import {
   calculateProfitLoss,
   calculateBreakEven,
+  calculateStockBreakEven,
   formatVND,
   formatPercent,
   DEFAULT_BUY_FEE_PERCENT,
@@ -52,6 +54,16 @@ import {
   DEFAULT_SELL_TAX_PERCENT,
   isNearExpiration
 } from "@/utils";
+import { AppColors } from "@/utils/theme";
+import {
+  PriceInfoTab,
+  StockChartTab,
+  CompanyProfileTab,
+  SubsidiariesTab,
+  LeadershipTab,
+  ShareholdersTab,
+  CapDividendTab,
+} from "@/components/analysis";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -258,13 +270,13 @@ export default function AnalysisPage() {
       );
 
       // For stocks: calculate break-even at this sell price level
-      // Break-even = (Giá mua * SL + Phí mua + Phí bán + Thuế bán) / SL
-      const principal = position.buyPrice * position.quantity;
-      const buyFee = (principal * feeSettings.buyFeePercent) / 100;
-      const sellFee = (scenario.sellPrice * position.quantity * feeSettings.sellFeePercent) / 100;
-      const sellTax = (scenario.sellPrice * position.quantity * feeSettings.sellTaxPercent) / 100;
-      const totalCosts = buyFee + sellFee + sellTax;
-      const breakEvenPrice = position.quantity > 0 ? (principal + totalCosts) / position.quantity : 0;
+      const breakEvenPrice = calculateStockBreakEven(
+        position.buyPrice,
+        position.quantity,
+        feeSettings.buyFeePercent,
+        feeSettings.sellFeePercent,
+        feeSettings.sellTaxPercent
+      );
 
       return {
         id: scenario.id,
@@ -381,7 +393,7 @@ export default function AnalysisPage() {
 
   if (isLoading) {
     return (
-      <Layout className="min-h-screen bg-gradient-soft">
+      <Layout className="min-h-screen" style={{ background: 'var(--background)' }}>
         <MainNav>
           <FeeSettingsButton />
         </MainNav>
@@ -396,9 +408,8 @@ export default function AnalysisPage() {
 
   if (!symbolCode) {
     return (
-      <Layout className="min-h-screen" style={{ background: '#F5F4EF' }}>
+      <Layout className="min-h-screen" style={{ background: 'var(--background)' }}>
         <MainNav>
-          {/* Symbol selector - Reused from populated state */}
           <Select
             showSearch
             value={null}
@@ -448,7 +459,7 @@ export default function AnalysisPage() {
   // Handle Error/Not Found State (Only when code exists but data not found)
   if (error || (!stockData && !warrantData)) {
     return (
-      <Layout className="min-h-screen bg-gradient-soft">
+      <Layout className="min-h-screen" style={{ background: 'var(--background)' }}>
         <MainNav>
           <FeeSettingsButton />
         </MainNav>
@@ -475,23 +486,9 @@ export default function AnalysisPage() {
   const nearExpiration = isWarrant && warrantData ? isNearExpiration(warrantData.days_to_maturity) : false;
 
   return (
-    <Layout className="min-h-screen bg-gradient-soft">
+    <Layout className="min-h-screen" style={{ background: 'var(--background)' }}>
       {/* Header */}
       <MainNav>
-        {/* Symbol Badge */}
-        <div className="hidden lg:flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5">
-          <Tag color={isWarrant ? "orange" : "blue"} className="m-0">
-            {isWarrant ? "CW" : "CP"}
-          </Tag>
-          <span className="text-white font-semibold">{symbolCode}</span>
-          {isWarrant && nearExpiration && (
-            <Tag color="warning" className="m-0 font-medium">
-              <WarningOutlined className="mr-1" />
-              Sắp đáo hạn
-            </Tag>
-          )}
-        </div>
-        {/* Symbol selector */}
         <Select
           showSearch
           value={symbolCode}
@@ -526,107 +523,107 @@ export default function AnalysisPage() {
 
       <Content className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
-          {/* Compact Info Card */}
-          <Card className="border-0 shadow-card">
-            <Row gutter={[24, 16]} align="middle">
-              {/* Stock info - all same font size */}
-              {!isWarrant && stockData && (
-                <>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Giá hiện tại</Text>
-                    <div className="text-lg font-semibold">
-                      {formatVND(stockData.current_price)}
-                    </div>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Thay đổi</Text>
-                    <div className={`text-lg font-semibold ${priceChange.isUp ? "text-green-600" : priceChange.change < 0 ? "text-red-600" : "text-gray-500"}`}>
-                      {priceChange.change > 0 ? "+" : ""}{formatVND(priceChange.change)} ({formatPercent(priceChange.changePercent)})
-                    </div>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Khối lượng</Text>
-                    <div className="text-lg font-semibold">
-                      {new Intl.NumberFormat("vi-VN").format(stockData.volume)}
-                    </div>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Mở cửa</Text>
-                    <div className="text-lg font-semibold">{formatVND(stockData.open_price)}</div>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Cao nhất</Text>
-                    <div className="text-lg font-semibold text-green-600">{formatVND(stockData.high_price)}</div>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Thấp nhất</Text>
-                    <div className="text-lg font-semibold text-red-600">{formatVND(stockData.low_price)}</div>
-                  </Col>
-                </>
-              )}
+          {/* Analysis Tabs - Two Column Layout */}
+          <Row gutter={[16, 16]}>
+            {/* Left Panel: Price Info / Company Tabs */}
+            <Col xs={24} lg={10}>
+              <Card className="border border-gray-200 dark:border-gray-700 shadow-card h-full">
+                {isWarrant ? (
+                  // Warrant: Single Price Info Tab (no company info)
+                  <PriceInfoTab
+                    data={warrantData ?? null}
+                    isLoading={warrantLoading}
+                    type="warrant"
+                  />
+                ) : (
+                  // Stock: 4 Tabs - Price, Profile, Subsidiaries, Leadership
+                  <Tabs
+                    defaultActiveKey="price"
+                    items={[
+                      {
+                        key: "price",
+                        label: "Giá",
+                        children: (
+                          <PriceInfoTab
+                            data={stockData ?? null}
+                            isLoading={stockLoading}
+                            type="stock"
+                          />
+                        ),
+                      },
+                      {
+                        key: "profile",
+                        label: "Hồ sơ",
+                        children: <CompanyProfileTab symbol={symbolCode} />,
+                      },
+                      {
+                        key: "subsidiaries",
+                        label: "Công ty con",
+                        children: <SubsidiariesTab symbol={symbolCode} />,
+                      },
+                      {
+                        key: "leadership",
+                        label: "Ban lãnh đạo",
+                        children: <LeadershipTab symbol={symbolCode} />,
+                      },
+                    ]}
+                  />
+                )}
+              </Card>
+            </Col>
 
-              {/* Warrant info - all same font size */}
-              {isWarrant && warrantData && (
-                <>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Giá CW</Text>
-                    <div className="text-lg font-semibold">
-                      {formatVND(warrantData.current_price)}
-                    </div>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Break-even</Text>
-                    <div className="text-lg font-semibold text-green-600">
-                      {breakEvenResult ? formatVND(breakEvenResult.breakEvenPrice) : "-"}
-                    </div>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Giá CP mẹ</Text>
-                    <Link href={`/analysis/${warrantData.underlying_symbol}`}>
-                      <div className="text-lg font-semibold text-blue-600 hover:text-blue-700 cursor-pointer">
-                        {formatVND(warrantUnderlying?.current_price || 0)}
-                      </div>
-                    </Link>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Tỷ lệ CĐ</Text>
-                    <div className="text-lg font-semibold">
-                      <Tag color="blue">{warrantData.conversion_ratio}:1</Tag>
-                    </div>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Giá thực hiện</Text>
-                    <div className="text-lg font-semibold">{formatVND(warrantData.exercise_price)}</div>
-                  </Col>
-                  <Col xs={12} sm={8} lg={4}>
-                    <Text type="secondary" className="text-sm block mb-1">Còn lại</Text>
-                    <div className="text-lg font-semibold">
-                      <Tag color={nearExpiration ? "warning" : "default"}>
-                        {warrantData.days_to_maturity} ngày
-                      </Tag>
-                    </div>
-                  </Col>
-                </>
-              )}
-            </Row>
-          </Card>
+            {/* Right Panel: Chart / Shareholders / Capital Tabs */}
+            <Col xs={24} lg={14}>
+              <Card className="border border-gray-200 dark:border-gray-700 shadow-card h-full">
+                {isWarrant ? (
+                  // Warrant: Single Chart Tab
+                  <StockChartTab symbol={symbolCode} />
+                ) : (
+                  // Stock: 3 Tabs - Chart, Shareholders, Cap & Dividend
+                  <Tabs
+                    defaultActiveKey="chart"
+                    items={[
+                      {
+                        key: "chart",
+                        label: "Biểu đồ",
+                        children: <StockChartTab symbol={symbolCode} />,
+                      },
+                      {
+                        key: "shareholders",
+                        label: "Cổ đông",
+                        children: <ShareholdersTab symbol={symbolCode} />,
+                      },
+                      {
+                        key: "cap-dividend",
+                        label: "Vốn & Cổ tức",
+                        children: <CapDividendTab symbol={symbolCode} />,
+                      },
+                    ]}
+                  />
+                )}
+              </Card>
+            </Col>
+          </Row>
 
           {/* Position & What-if Combined */}
           <Card
             title={
               <div className="flex items-center gap-2">
-                <CalculatorOutlined className="text-[#CC785C]" />
+                <CalculatorOutlined style={{ color: AppColors.primary }} />
                 <span>Mô phỏng lợi nhuận What-if</span>
                 <Tag color={isWarrant ? "orange" : "blue"}>{isWarrant ? "Chứng quyền" : "Cổ phiếu"}</Tag>
               </div>
             }
-            className="border-0 shadow-card"
+            className="border border-gray-200 dark:border-gray-700 shadow-card"
           >
             {/* Position Input */}
             {!position ? (
               <div className="text-center py-8">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary-50 flex items-center justify-center">
-                  <CalculatorOutlined className="text-primary-500 text-3xl" />
+                <div
+                  className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: `${AppColors.primary}1A` }}
+                >
+                  <CalculatorOutlined className="text-3xl" style={{ color: AppColors.primary }} />
                 </div>
                 <Text type="secondary" className="block mb-4 text-lg">
                   Tạo vị thế để bắt đầu mô phỏng lợi nhuận
@@ -644,7 +641,7 @@ export default function AnalysisPage() {
             ) : (
               <div className="space-y-6">
                 {/* Position Info Row - Compact layout */}
-                <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100">
+                <div className="bg-gray-50/50 dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
                   <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                     {/* Left Group: Inputs */}
                     <div className="flex gap-4 items-end">
@@ -686,19 +683,14 @@ export default function AnalysisPage() {
                     </div>
 
                     {/* Right Group: Total Cost */}
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col justify-center items-end text-right w-fit min-w-[200px]">
-                      <Text type="secondary" className="text-xs font-medium uppercase tracking-wide mb-1 whitespace-nowrap">
+                    <div className="!bg-gray-900 dark:!bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-md flex flex-col justify-center items-end text-right w-fit min-w-[200px]">
+                      <Text className="text-xs font-bold uppercase tracking-wide mb-1 whitespace-nowrap !text-gray-300">
                         Tổng vốn đầu tư
                       </Text>
                       <div className="flex items-baseline gap-2 justify-end">
-                        <Text strong className="text-2xl text-primary-600 whitespace-nowrap">
+                        <Text strong className="text-2xl whitespace-nowrap !text-primary-500">
                           {formatVND(totalCost)}
                         </Text>
-                        {feeSettings.buyFeePercent > 0 && (
-                          <Text type="secondary" className="text-xs whitespace-nowrap">
-                            (Phí: {feeSettings.buyFeePercent}%)
-                          </Text>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -707,10 +699,10 @@ export default function AnalysisPage() {
                 {/* Quick Presets */}
                 {position.buyPrice > 0 && (
                   <div className="space-y-3">
-                    <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-4">
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
                       <div className="flex items-center gap-4 flex-wrap">
-                        <Text type="secondary">
-                          <BulbOutlined className="mr-1 text-primary-500" />
+                        <Text className="!text-gray-700 dark:!text-gray-300">
+                          <BulbOutlined className="mr-1" />
                           Thêm nhanh:
                         </Text>
                         <Space wrap>
@@ -719,7 +711,7 @@ export default function AnalysisPage() {
                               key={preset.label}
                               size="small"
                               onClick={() => handleQuickPreset(preset.factor)}
-                              className={`font-medium shadow-sm ${preset.factor < 1 ? "text-danger border-red-200 hover:border-red-400 hover:bg-red-50" : "text-success border-green-200 hover:border-green-400 hover:bg-green-50"}`}
+                              className={`font-medium shadow-sm ${preset.factor < 1 ? "!text-red-600 dark:!text-red-400 !border-red-200 dark:!border-red-800 hover:!border-red-400 hover:!bg-red-50 dark:hover:!bg-red-900/30" : "!text-green-600 dark:!text-green-400 !border-green-200 dark:!border-green-800 hover:!border-green-400 hover:!bg-green-50 dark:hover:!bg-green-900/30"}`}
                             >
                               {preset.label} ({formatVND(Math.round(position.buyPrice * preset.factor))})
                             </Button>
@@ -730,7 +722,15 @@ export default function AnalysisPage() {
                               type="primary"
                               icon={<ThunderboltOutlined />}
                               onClick={() => quickPresets.forEach(p => handleQuickPreset(p.factor))}
-                              className="!bg-[#CC785C] !border-[#CC785C] hover:!bg-[#b5654a] hover:!border-[#b5654a]"
+                              style={{ backgroundColor: AppColors.primary, borderColor: AppColors.primary }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = `${AppColors.primary}CC`;
+                                e.currentTarget.style.borderColor = `${AppColors.primary}CC`;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = AppColors.primary;
+                                e.currentTarget.style.borderColor = AppColors.primary;
+                              }}
                             >
                               Tất cả
                             </Button>
@@ -741,10 +741,10 @@ export default function AnalysisPage() {
 
                     {/* Underlying-based presets for warrants */}
                     {isWarrant && underlyingPresets.length > 0 && warrantData && (
-                      <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl p-4 border border-orange-200">
+                      <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 border border-orange-200 dark:border-orange-800">
                         <div className="flex items-center gap-4 flex-wrap">
                           <Tooltip title="Giá CW ước tính khi cổ phiếu mẹ thay đổi">
-                            <Text type="secondary">
+                            <Text type="secondary" className="dark:!text-gray-300">
                               <FireOutlined className="mr-1 text-orange-500" />
                               Theo CP mẹ ({warrantData.underlying_symbol}):
                             </Text>
@@ -758,7 +758,7 @@ export default function AnalysisPage() {
                                 <Button
                                   size="small"
                                   onClick={() => addScenario(preset.price)}
-                                  className="font-medium shadow-sm border-orange-200 hover:border-orange-400 hover:bg-orange-50 text-orange-700"
+                                  className="font-medium shadow-sm !border-orange-200 dark:!border-orange-700 hover:!border-orange-400 hover:!bg-orange-50 dark:hover:!bg-orange-900/30 !text-orange-700 dark:!text-orange-400"
                                 >
                                   {preset.label} → {formatVND(preset.price)}
                                 </Button>
@@ -790,7 +790,11 @@ export default function AnalysisPage() {
                       icon={<PlusOutlined />}
                       onClick={handleAddScenario}
                       disabled={!newSellPrice}
-                      className="!bg-[#CC785C] !border-[#CC785C] hover:!bg-[#b5654a] hover:!border-[#b5654a] disabled:!bg-gray-200 disabled:!border-gray-200"
+                      style={{
+                        backgroundColor: !newSellPrice ? undefined : AppColors.primary,
+                        borderColor: !newSellPrice ? undefined : AppColors.primary
+                      }}
+                      className={!newSellPrice ? "!bg-gray-400 !border-gray-400" : ""}
                     >
                       Thêm
                     </Button>
@@ -801,27 +805,25 @@ export default function AnalysisPage() {
                         okText="Xóa"
                         cancelText="Hủy"
                       >
-                        <Button danger icon={<DeleteOutlined />}>Xóa tất cả</Button>
+                        <Button danger icon={<DeleteOutlined />} className="dark:!text-red-400 dark:!border-red-700 dark:hover:!bg-red-900/30">Xóa tất cả</Button>
                       </Popconfirm>
                     )}
                   </Space>
                 </div>
 
                 {scenarios.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-xl">
+                  <div className="text-center py-8 bg-gray-50 dark:bg-white/5 rounded-xl">
                     <SwapOutlined className="text-gray-400 text-3xl mb-4" />
                     <Text type="secondary" className="block">Nhập giá bán hoặc sử dụng nút thêm nhanh</Text>
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-lg border border-gray-100">
+                  <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
                     <Table
                       columns={scenarioColumns}
                       dataSource={scenarioResults}
                       rowKey="id"
                       pagination={false}
-                      rowClassName={(record) =>
-                        `transition-colors ${record.isProfit ? "bg-green-50 hover:bg-green-100" : "bg-red-50 hover:bg-red-100"}`
-                      }
+                      rowClassName={(record) => "hover:bg-gray-50 dark:hover:bg-[#2d2d2d] transition-colors"}
                       size="middle"
                       scroll={{ x: 800, y: 350 }}
                     />
@@ -839,7 +841,7 @@ export default function AnalysisPage() {
                 key: '1',
                 label: (
                   <div className="flex items-center gap-2">
-                    <QuestionCircleOutlined className="text-[#CC785C]" />
+                    <QuestionCircleOutlined style={{ color: "var(--primary-500)" }} />
                     <Text strong>Hướng dẫn sử dụng</Text>
                   </div>
                 ),
@@ -847,7 +849,7 @@ export default function AnalysisPage() {
                   <Row gutter={[24, 16]}>
                     <Col xs={24} md={8}>
                       <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#CC785C] text-white flex items-center justify-center font-medium shrink-0 text-sm">1</div>
+                        <div className="w-8 h-8 rounded-full text-white flex items-center justify-center font-medium shrink-0 text-sm" style={{ backgroundColor: "var(--primary-500)" }}>1</div>
                         <div>
                           <Text strong className="block">Tạo vị thế</Text>
                           <Text type="secondary" className="text-sm">Nhập giá mua và số lượng cổ phiếu/chứng quyền</Text>
@@ -856,7 +858,7 @@ export default function AnalysisPage() {
                     </Col>
                     <Col xs={24} md={8}>
                       <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#CC785C] text-white flex items-center justify-center font-medium shrink-0 text-sm">2</div>
+                        <div className="w-8 h-8 rounded-full text-white flex items-center justify-center font-medium shrink-0 text-sm" style={{ backgroundColor: "var(--primary-500)" }}>2</div>
                         <div>
                           <Text strong className="block">Thêm kịch bản</Text>
                           <Text type="secondary" className="text-sm">Sử dụng nút thêm nhanh hoặc nhập giá bán</Text>
@@ -865,7 +867,7 @@ export default function AnalysisPage() {
                     </Col>
                     <Col xs={24} md={8}>
                       <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#CC785C] text-white flex items-center justify-center font-medium shrink-0 text-sm">3</div>
+                        <div className="w-8 h-8 rounded-full text-white flex items-center justify-center font-medium shrink-0 text-sm" style={{ backgroundColor: "var(--primary-500)" }}>3</div>
                         <div>
                           <Text strong className="block">Phân tích</Text>
                           <Text type="secondary" className="text-sm">Xem lợi nhuận, phí, thuế chi tiết cho mỗi kịch bản</Text>
@@ -880,11 +882,11 @@ export default function AnalysisPage() {
 
           {/* Link to Warrant Screener (for stocks) */}
           {!isWarrant && (
-            <Card className="border-0 shadow-card bg-gradient-to-r from-primary-50 to-blue-50">
+            <Card className="border-0 shadow-card bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center">
-                    <FireOutlined className="text-[#CC785C] text-xl" />
+                    <FireOutlined className="text-xl" style={{ color: "var(--primary-500)" }} />
                   </div>
                   <div>
                     <Text strong className="text-lg">Chứng quyền {symbolCode}</Text>

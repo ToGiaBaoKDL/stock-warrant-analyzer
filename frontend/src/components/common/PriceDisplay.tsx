@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { getPriceColorClass, getPriceColorHex } from "@/utils/priceColor";
+import { getPriceColorHex } from "@/utils/priceColor";
 import { formatVND } from "@/utils/formatters";
+import { AppColors } from "@/utils/theme";
 
 // ============================================
 // Types
@@ -50,12 +51,12 @@ export const PriceDisplay = React.memo(function PriceDisplay({
     className = "",
     bold = false,
 }: PriceDisplayProps) {
-    const colorClass = getPriceColorClass(change);
-    const colorStyle = useInlineStyle ? { color: getPriceColorHex(change) } : undefined;
+    const colorStyle = { color: getPriceColorHex(change) };
+    // const colorStyle = useInlineStyle ? { color: getPriceColorHex(change) } : undefined;
 
     return (
         <span
-            className={`${!useInlineStyle ? colorClass : ""} ${bold ? "font-semibold" : ""} ${className}`}
+            className={`${bold ? "font-semibold" : ""} ${className}`}
             style={colorStyle}
         >
             {formatVND(value)}
@@ -74,15 +75,14 @@ export const PercentChange = React.memo(function PercentChange({
     bold = false,
     showSign = true,
 }: PercentChangeProps) {
-    const colorClass = getPriceColorClass(value);
-    const colorStyle = useInlineStyle ? { color: getPriceColorHex(value) } : undefined;
+    const colorStyle = { color: getPriceColorHex(value) };
 
     const formattedValue = value.toFixed(decimals);
     const displayValue = showSign && value > 0 ? `+${formattedValue}%` : `${formattedValue}%`;
 
     return (
         <span
-            className={`${!useInlineStyle ? colorClass : ""} ${bold ? "font-semibold" : ""} ${className}`}
+            className={`${bold ? "font-semibold" : ""} ${className}`}
             style={colorStyle}
         >
             {displayValue}
@@ -108,7 +108,10 @@ export const ProfitDisplay = React.memo(function ProfitDisplay({
     const colorClass = isProfit ? "!text-green-600" : value < 0 ? "!text-red-600" : "!text-gray-500";
 
     return (
-        <span className={`font-medium ${colorClass} ${className}`}>
+        <span
+            className={`font-medium ${className}`}
+            style={{ color: isProfit ? "var(--color-up)" : value < 0 ? "var(--color-down)" : "var(--color-ref)" }}
+        >
             {value > 0 ? "+" : ""}
             {showCurrency ? formatVND(value) : value.toLocaleString("vi-VN")}
         </span>

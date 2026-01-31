@@ -42,7 +42,7 @@ export function StockDetailSkeleton() {
         <Row gutter={[24, 24]}>
           {[1, 2, 3, 4].map((i) => (
             <Col key={i} xs={12} sm={6}>
-              <div className="text-center p-4 rounded-xl bg-gray-50">
+              <div className="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                 <Skeleton.Input active size="small" style={{ width: 60 }} />
                 <div className="mt-2">
                   <Skeleton.Input active style={{ width: 80 }} />
@@ -132,7 +132,7 @@ export function CalculatorFormSkeleton() {
           </Col>
         ))}
         <Col xs={24} sm={12} lg={6}>
-          <div className="p-4 rounded-xl bg-gray-50 text-center">
+          <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 text-center">
             <Skeleton.Input active size="small" style={{ width: 80 }} />
             <div className="mt-2">
               <Skeleton.Input active size="large" style={{ width: 120 }} />
@@ -149,9 +149,9 @@ export function CalculatorFormSkeleton() {
  */
 export function PageLoadingSkeleton({ title }: { title?: string }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header skeleton */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">

@@ -135,7 +135,7 @@ export default function Home() {
   ];
 
   return (
-    <Layout className="min-h-screen" style={{ background: "#F5F4EF" }}>
+    <Layout className="min-h-screen" style={{ background: "var(--background)" }}>
       {/* Header */}
       <MainNav />
 
@@ -157,8 +157,8 @@ export default function Home() {
       </Content>
 
       {/* Footer */}
-      <Footer className="text-center bg-white border-t border-gray-100 py-4">
-        <Text type="secondary" className="text-sm">
+      <Footer className="text-center bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 py-4">
+        <Text type="secondary" className="text-sm dark:text-gray-400">
           Dữ liệu từ SSI iBoard API
         </Text>
       </Footer>

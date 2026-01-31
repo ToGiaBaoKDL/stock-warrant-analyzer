@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.api.routes import market, warrants, stocks
+from app.api.routes import market, warrants, stocks, company
 from app.services.iboard_client import get_iboard_client, close_iboard_client
 
 
@@ -83,6 +83,7 @@ app.add_middleware(
 app.include_router(market.router, prefix=settings.api_v1_prefix)
 app.include_router(warrants.router, prefix=settings.api_v1_prefix)
 app.include_router(stocks.router, prefix=settings.api_v1_prefix)
+app.include_router(company.router, prefix=settings.api_v1_prefix)
 
 
 @app.get("/")

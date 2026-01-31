@@ -20,26 +20,6 @@ export interface ScenarioRow {
 }
 
 /**
- * Position data for what-if analysis
- */
-export interface StockPosition {
-    symbol: string;
-    buyPrice: number;
-    quantity: number;
-    buyFeePercent: number;
-}
-
-/**
- * Individual scenario configuration
- */
-export interface StockScenario {
-    id: string;
-    sellPrice: number;
-    sellFeePercent: number;
-    taxPercent: number;
-}
-
-/**
  * Summary statistics for scenarios
  */
 export interface ScenarioSummary {

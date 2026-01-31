@@ -40,10 +40,12 @@ import { useWarrantStore } from "@/stores";
 import {
   isNearExpiration,
   formatVND,
-  formatPercent
+  formatPercent,
+  getPriceColorHex
 } from "@/utils";
+import { AppColors } from "@/utils/theme";
 import type { WarrantItem } from "@/types/api";
-import { ExportButtons, MainNav, FeeSettingsButton } from "@/components";
+import { ExportButtons, MainNav, FeeSettingsButton, SparklineCell } from "@/components";
 import type { ExportColumn } from "@/utils/exportUtils";
 
 const { Content } = Layout;
@@ -120,7 +122,7 @@ function WarrantsPageContent() {
       render: (symbol: string, record: WarrantTableRow) => (
         <Link href={`/analysis/${symbol}`}>
           <div className="flex flex-col gap-0.5">
-            <Text strong className="text-[#CC785C] hover:text-[#b5654a]">{symbol}</Text>
+            <Text strong style={{ color: getPriceColorHex(record.change_percent) }} className="hover:opacity-80">{symbol}</Text>
             {record.days_to_maturity >= 0 && isNearExpiration(record.days_to_maturity) && (
               <Tag color="warning" icon={<WarningOutlined />} className="text-[10px] px-1 py-0 leading-tight w-fit">
                 Sắp hết
@@ -175,7 +177,7 @@ function WarrantsPageContent() {
       align: "right",
       sorter: (a, b) => a.volume - b.volume,
       render: (volume: number) => (
-        <Text className="text-slate-600">
+        <Text className="text-slate-600 dark:text-slate-400">
           {volume >= 1000000
             ? `${(volume / 1000000).toFixed(1)}M`
             : volume >= 1000
@@ -195,10 +197,29 @@ function WarrantsPageContent() {
       width: 80,
       align: "right",
       sorter: (a, b) => a.change_percent - b.change_percent,
-      render: (changePercent: number) => (
-        <Text className={`font-medium ${changePercent > 0 ? "text-green-600" : changePercent < 0 ? "text-red-600" : "text-gray-500"}`}>
-          {changePercent > 0 ? "+" : ""}{changePercent.toFixed(2)}%
-        </Text>
+      render: (changePercent: number, record: WarrantTableRow) => {
+        const color = getPriceColorHex(changePercent);
+        const absChange = record.change || 0;
+        return (
+          <div className="flex flex-col items-end leading-tight">
+            <span style={{ color }}>
+              {absChange >= 0 ? "+" : ""}{absChange.toLocaleString()}
+            </span>
+            <span style={{ color }} className="text-xs">
+              {changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Trend",
+      dataIndex: "symbol",
+      key: "trend",
+      width: 90,
+      align: "center" as const,
+      render: (symbol: string, record: WarrantTableRow) => (
+        <SparklineCell symbol={symbol} priceChange={record.change_percent} width={80} height={24} />
       ),
     },
     {
@@ -282,8 +303,8 @@ function WarrantsPageContent() {
       width: 140,
       align: "right",
       render: (profit: number) => (
-        <div className={`px-2 py-1 rounded ${profit >= 0 ? "bg-green-50" : "bg-red-50"}`}>
-          <Text strong className={profit >= 0 ? "text-green-600" : "text-red-600"}>
+        <div className={`px-2 py-1 rounded border ${profit >= 0 ? "bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-800" : "bg-red-100 border-red-300 dark:bg-red-900/30 dark:border-red-800"}`}>
+          <Text strong className={profit >= 0 ? "!text-green-700 dark:!text-green-400" : "!text-red-700 dark:!text-red-400"}>
             {profit >= 0 ? "+" : ""}{formatVND(profit)}
           </Text>
         </div>
@@ -299,11 +320,19 @@ function WarrantsPageContent() {
       key: "estimatedProfitPercent",
       width: 95,
       align: "right",
-      render: (percent: number) => (
-        <Tag color={percent >= 0 ? "success" : "error"} className="font-semibold">
-          {formatPercent(percent)}
-        </Tag>
-      ),
+      render: (percent: number) => {
+        const isProfit = percent >= 0;
+        const tagStyle = {
+          backgroundColor: isProfit ? 'rgba(22, 163, 74, 0.15)' : 'rgba(220, 38, 38, 0.15)',
+          color: isProfit ? '#16a34a' : '#dc2626',
+          border: `1px solid ${isProfit ? 'rgba(22, 163, 74, 0.3)' : 'rgba(220, 38, 38, 0.3)'}`,
+        };
+        return (
+          <Tag className="font-semibold dark:!bg-transparent" style={tagStyle}>
+            {formatPercent(percent)}
+          </Tag>
+        );
+      },
     },
     {
       title: (
@@ -319,11 +348,11 @@ function WarrantsPageContent() {
       render: (percent: number, record: WarrantTableRow) => (
         <Space>
           {record.isProfitable ? (
-            <CheckCircleOutlined className="text-green-500" />
+            <CheckCircleOutlined className="text-green-500 dark:text-green-400" />
           ) : (
-            <WarningOutlined className="text-red-500" />
+            <WarningOutlined className="text-red-500 dark:text-red-400" />
           )}
-          <Text strong className={record.isProfitable ? "text-green-600" : "text-red-600"}>
+          <Text strong className={record.isProfitable ? "!text-green-600 dark:!text-green-400" : "!text-red-600 dark:!text-red-400"}>
             {formatPercent(percent)}
           </Text>
         </Space>
@@ -368,7 +397,7 @@ function WarrantsPageContent() {
   const isInitialLoading = warrantsLoading && selectedUnderlying;
 
   return (
-    <Layout className="min-h-screen" style={{ background: '#F5F4EF' }}>
+    <Layout className="min-h-screen" style={{ background: 'var(--background)' }}>
       <MainNav>
         <FeeSettingsButton />
       </MainNav>
@@ -376,14 +405,14 @@ function WarrantsPageContent() {
       <Content className="p-6 min-h-screen">
         <div className="max-w-7xl mx-auto">
           {/* Filter Toolbar */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 sticky top-16 z-10">
+          <div className="!bg-white dark:!bg-[#1f1f1f] p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 sticky top-16 z-10">
             <div className="flex flex-col gap-4">
               {/* Top Row: Inputs & Actions */}
               <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-end">
                 {/* Inputs Group */}
                 <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto flex-1">
                   <div className="w-full sm:w-80">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                    <div className="text-xs font-semibold text-white uppercase tracking-wide mb-1.5">
                       Cổ phiếu mẹ
                     </div>
                     <Select
@@ -401,7 +430,7 @@ function WarrantsPageContent() {
                   </div>
 
                   <div className="w-full sm:w-22">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                    <div className="text-xs font-semibold text-white uppercase tracking-wide mb-1.5">
                       Giá kỳ vọng
                     </div>
                     <InputNumber
@@ -418,7 +447,7 @@ function WarrantsPageContent() {
                   </div>
 
                   <div className="w-full sm:w-40">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                    <div className="text-xs font-semibold text-white uppercase tracking-wide mb-1.5">
                       Khối lượng
                     </div>
                     <InputNumber
@@ -438,11 +467,11 @@ function WarrantsPageContent() {
                 {/* Right Side: Current Price & Actions */}
                 <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
                   {warrantsData?.underlying && (
-                    <div className="px-4 py-2 bg-gray-50 rounded-lg border border-gray-100 flex flex-col items-end mr-2">
+                    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 flex flex-col items-end mr-2">
                       <span className="text-[10px] text-gray-400 font-medium uppercase">Hiện tại</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-800">{formatVND(warrantsData.underlying.current_price)}</span>
-                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${(warrantsData.underlying.change ?? 0) >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        <span className="font-bold text-gray-800 dark:text-gray-100">{formatVND(warrantsData.underlying.current_price)}</span>
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${(warrantsData.underlying.change ?? 0) >= 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                           }`}>
                           {(warrantsData.underlying.change_percent ?? 0) > 0 ? "+" : ""}{formatPercent(warrantsData.underlying.change_percent ?? 0)}
                         </span>
@@ -479,7 +508,7 @@ function WarrantsPageContent() {
               {selectedUnderlying && warrantsData && warrantsData.warrants.length > 0 && !isInitialLoading && (
                 <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-400 font-medium">Bộ lọc:</span>
+                    <span className="text-sm text-white font-medium">Bộ lọc:</span>
                     <Segmented
                       size="middle"
                       options={[
@@ -493,7 +522,7 @@ function WarrantsPageContent() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-400 font-medium">Sắp xếp:</span>
+                    <span className="text-sm text-white font-medium">Sắp xếp:</span>
                     <Segmented
                       size="middle"
                       options={[
@@ -538,7 +567,8 @@ function WarrantsPageContent() {
               action={
                 <Button
                   onClick={() => refetch()}
-                  className="!bg-[#CC785C] !border-[#CC785C] !text-white hover:!bg-[#b5654a] hover:!border-[#b5654a]"
+                  style={{ backgroundColor: AppColors.primary, borderColor: AppColors.primary, color: 'white' }}
+                  className="hover:!opacity-90"
                 >
                   Thử lại
                 </Button>
@@ -572,10 +602,10 @@ function WarrantsPageContent() {
                   </Card>
                 </Col>
                 <Col xs={12} sm={6}>
-                  <Card className="shadow-sm border-0 bg-green-50" styles={{ body: { padding: 16 } }}>
+                  <Card className="shadow-sm border-0 bg-green-50 dark:bg-green-900/10" styles={{ body: { padding: 16 } }}>
                     <div className="text-center">
-                      <Text className="text-xs text-gray-500 block mb-1">CW có lãi</Text>
-                      <Text strong className="text-2xl text-green-600">
+                      <Text className="text-xs text-gray-500 dark:text-gray-400 block mb-1">CW có lãi</Text>
+                      <Text strong className="text-2xl text-green-600 dark:text-green-400">
                         {tableData.filter(w => w.isProfitable).length}
                         <Text type="secondary" className="text-sm font-normal">/{tableData.length}</Text>
                       </Text>
@@ -583,10 +613,10 @@ function WarrantsPageContent() {
                   </Card>
                 </Col>
                 <Col xs={12} sm={6}>
-                  <Card className="shadow-sm border-0 bg-orange-50" styles={{ body: { padding: 16 } }}>
+                  <Card className="shadow-sm border-0 bg-orange-50 dark:bg-orange-900/10" styles={{ body: { padding: 16 } }}>
                     <div className="text-center">
-                      <Text className="text-xs text-gray-500 block mb-1">Sắp đáo hạn (&lt;14 ngày)</Text>
-                      <Text strong className="text-2xl text-orange-600">
+                      <Text className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Sắp đáo hạn (&lt;14 ngày)</Text>
+                      <Text strong className="text-2xl text-orange-600 dark:text-orange-400">
                         {tableData.filter(w => isNearExpiration(w.days_to_maturity)).length}
                       </Text>
                     </div>
@@ -594,7 +624,7 @@ function WarrantsPageContent() {
                 </Col>
                 <Col xs={12} sm={6}>
                   <Tooltip title={bestBreakEvenWarrant ? `CW ${bestBreakEvenWarrant.symbol}` : undefined}>
-                    <Card className="shadow-sm border-0 bg-blue-50" styles={{ body: { padding: 16 } }}>
+                    <Card className="shadow-sm border-0 bg-blue-50 dark:bg-blue-900/10" styles={{ body: { padding: 16 } }}>
                       <div className="text-center">
                         <Text className="text-xs text-gray-500 block mb-1">
                           Break-even thấp nhất
@@ -612,7 +642,7 @@ function WarrantsPageContent() {
               </Row>
 
               {/* Main Table */}
-              <Card className="shadow-sm mb-6 overflow-hidden">
+              <Card className="shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
                 <div className="relative">
                   <Table
                     columns={columns}
@@ -625,38 +655,38 @@ function WarrantsPageContent() {
                       pageSizeOptions: ["10", "15", "25", "50"],
                       showTotal: (total) => `Tổng ${total} chứng quyền`
                     }}
-                    rowClassName={() => "hover:bg-slate-50"}
+                    rowClassName={() => "hover:bg-slate-50 dark:hover:bg-[#2d2d2d]"}
                     size="middle"
                   />
                 </div>
               </Card>
 
               {/* Formula Info Cards */}
-              <Card className="mb-6" styles={{ body: { padding: 24 } }}>
+              <Card className="mt-6 border border-gray-200 dark:border-gray-700" styles={{ body: { padding: 24 } }}>
                 <Row gutter={[16, 16]}>
                   <Col xs={24} sm={12} lg={6}>
-                    <div className="bg-[#F5F4EF] rounded-lg p-4 h-full">
+                    <div className="bg-[var(--background)] rounded-lg p-4 h-full">
                       <Text className="text-xs text-gray-500 block mb-1">Lợi nhuận xanh</Text>
                       <Text strong className="font-mono text-sm block mb-2">CW có lãi</Text>
                       <Text type="secondary" className="text-xs">Ô lợi nhuận được tô màu xanh</Text>
                     </div>
                   </Col>
                   <Col xs={24} sm={12} lg={6}>
-                    <div className="bg-[#F5F4EF] rounded-lg p-4 h-full">
+                    <div className="bg-[var(--background)] rounded-lg p-4 h-full">
                       <Text className="text-xs text-gray-500 block mb-1">Tag Sắp hết</Text>
                       <Text strong className="font-mono text-sm block mb-2">Sắp đáo hạn</Text>
                       <Text type="secondary" className="text-xs">Còn lại ≤ 14 ngày</Text>
                     </div>
                   </Col>
                   <Col xs={24} sm={12} lg={6}>
-                    <div className="bg-[#F5F4EF] rounded-lg p-4 h-full">
+                    <div className="bg-[var(--background)] rounded-lg p-4 h-full">
                       <Text className="text-xs text-gray-500 block mb-1">Công thức lợi nhuận</Text>
                       <Text strong className="font-mono text-sm block mb-2">(Giá KV - Giá TH) / TL + TV</Text>
                       <Text type="secondary" className="text-xs">Giá CW ≈ Intrinsic Value + Time Value</Text>
                     </div>
                   </Col>
                   <Col xs={24} sm={12} lg={6}>
-                    <div className="bg-[#F5F4EF] rounded-lg p-4 h-full">
+                    <div className="bg-[var(--background)] rounded-lg p-4 h-full">
                       <Text className="text-xs text-gray-500 block mb-1">Phí & Thuế</Text>
                       <Text strong className="font-mono text-sm block mb-2">{feeSettings.buyFeePercent}% + {feeSettings.sellFeePercent}% + {feeSettings.sellTaxPercent}%</Text>
                       <Text type="secondary" className="text-xs">Phí mua + Phí bán + Thuế bán</Text>
@@ -669,17 +699,20 @@ function WarrantsPageContent() {
               <Card
                 title={
                   <div className="flex items-center gap-2">
-                    <InfoCircleOutlined className="text-[#CC785C]" />
+                    <InfoCircleOutlined style={{ color: AppColors.primary }} />
                     <span>Hướng dẫn sử dụng Warrant Screener</span>
                   </div>
                 }
-                className="mb-6"
+                className="mt-6 border border-gray-200 dark:border-gray-700"
                 styles={{ body: { padding: 24 } }}
               >
                 <Row gutter={[24, 16]}>
                   <Col xs={24} md={6}>
                     <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#CC785C] text-white flex items-center justify-center font-medium shrink-0 text-sm">1</div>
+                      <div
+                        className="w-8 h-8 rounded-full text-white flex items-center justify-center font-medium shrink-0 text-sm"
+                        style={{ backgroundColor: AppColors.primary }}
+                      >1</div>
                       <div>
                         <Text strong className="block">Chọn cổ phiếu mẹ</Text>
                         <Text type="secondary" className="text-sm">Chọn mã cổ phiếu bạn muốn xem các CW liên quan</Text>
@@ -688,7 +721,10 @@ function WarrantsPageContent() {
                   </Col>
                   <Col xs={24} md={6}>
                     <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#CC785C] text-white flex items-center justify-center font-medium shrink-0 text-sm">2</div>
+                      <div
+                        className="w-8 h-8 rounded-full text-white flex items-center justify-center font-medium shrink-0 text-sm"
+                        style={{ backgroundColor: AppColors.primary }}
+                      >2</div>
                       <div>
                         <Text strong className="block">Nhập giá kỳ vọng</Text>
                         <Text type="secondary" className="text-sm">Dự đoán giá CP mẹ sẽ đạt để tính lợi nhuận CW</Text>
@@ -697,7 +733,10 @@ function WarrantsPageContent() {
                   </Col>
                   <Col xs={24} md={6}>
                     <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#CC785C] text-white flex items-center justify-center font-medium shrink-0 text-sm">3</div>
+                      <div
+                        className="w-8 h-8 rounded-full text-white flex items-center justify-center font-medium shrink-0 text-sm"
+                        style={{ backgroundColor: AppColors.primary }}
+                      >3</div>
                       <div>
                         <Text strong className="block">So sánh Break-even</Text>
                         <Text type="secondary" className="text-sm">Chọn CW có Break-even thấp nhất và còn thời gian đáo hạn</Text>
@@ -706,7 +745,10 @@ function WarrantsPageContent() {
                   </Col>
                   <Col xs={24} md={6}>
                     <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#CC785C] text-white flex items-center justify-center font-medium shrink-0 text-sm">4</div>
+                      <div
+                        className="w-8 h-8 rounded-full text-white flex items-center justify-center font-medium shrink-0 text-sm"
+                        style={{ backgroundColor: AppColors.primary }}
+                      >4</div>
                       <div>
                         <Text strong className="block">Phân tích chi tiết</Text>
                         <Text type="secondary" className="text-sm">Click vào mã CW để xem phân tích What-if chi tiết</Text>
@@ -727,12 +769,12 @@ function WarrantsPageContent() {
 export default function WarrantsPage() {
   return (
     <Suspense fallback={
-      <Layout className="min-h-screen" style={{ background: '#F5F4EF' }}>
+      <Layout className="min-h-screen" style={{ background: 'var(--background)' }}>
         <MainNav />
         <Content className="p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             <Card className="animate-pulse">
-              <div className="h-64 bg-gray-200 rounded" />
+              <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded" />
             </Card>
           </div>
         </Content>

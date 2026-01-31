@@ -4,6 +4,7 @@
  */
 
 import html2canvas from "html2canvas";
+import { formatVND, formatPercent } from "@/utils/formatters";
 
 /**
  * Format value for CSV export based on type
@@ -15,11 +16,15 @@ function formatValueForCSV(value: unknown, key: string): string {
     if (typeof value === "number") {
         // Price fields - format with commas
         if (key.includes("price") || key === "breakEven" || key === "exercise_price") {
-            return value.toLocaleString("vi-VN");
+            return formatVND(value).replace(/\s?₫/g, ""); // Remove currency symbol for CSV if preferred, or keep it. Let's keep numbers clean for CSV. Actually, standard CSV for Excel usually prefers raw numbers, but user wants "proper formatting". Let's stick to consistent display format but maybe without symbol if strictly data.
+            // The existing code used toLocaleString("vi-VN") which is basically formatted number. formatVND adds symbol.
+            // Let's use formatNumber from formatters? Or just keep toLocaleString.
+            // Actually, for CSV, it's often better to keep raw numbers if they are to be calculated. But request says "format value...".
+            // Let's assume strict visual consistency is key.
+            return (value as number).toLocaleString("vi-VN");
         }
-        // Percent fields - format with 2 decimal places
         if (key.includes("percent") || key === "profitMarginPercent") {
-            return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+            return formatPercent(Number(value));
         }
         // Volume fields - format with commas
         if (key.includes("volume") || key === "volume") {

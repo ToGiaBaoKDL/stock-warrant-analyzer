@@ -5,47 +5,31 @@ import {
   DEFAULT_SELL_FEE_PERCENT,
   DEFAULT_SELL_TAX_PERCENT,
 } from "@/utils/calculations";
+import type { StockPosition, StockScenario, StockSymbolData } from "@/types/stock";
 
-interface StockPosition {
-  symbol: string;
-  buyPrice: number;
-  quantity: number;
-  buyFeePercent: number;
-}
 
-interface StockScenario {
-  id: string;
-  sellPrice: number;
-  sellFeePercent: number;
-  taxPercent: number;
-}
-
-interface SymbolData {
-  position: StockPosition | null;
-  scenarios: StockScenario[];
-}
 
 interface StockState {
   // Current stock being analyzed
   currentSymbol: string | null;
-  
+
   // Cache positions and scenarios by symbol
-  symbolDataCache: Record<string, SymbolData>;
-  
+  symbolDataCache: Record<string, StockSymbolData>;
+
   // Get current symbol data
   position: StockPosition | null;
   scenarios: StockScenario[];
-  
+
   // Actions
   setCurrentSymbol: (symbol: string | null) => void;
   setPosition: (position: StockPosition | null) => void;
   updatePosition: (updates: Partial<StockPosition>) => void;
-  
+
   addScenario: (sellPrice: number) => void;
   updateScenario: (id: string, updates: Partial<StockScenario>) => void;
   removeScenario: (id: string) => void;
   clearScenarios: () => void;
-  
+
   // Reset
   reset: () => void;
 }
@@ -63,30 +47,30 @@ export const useStockStore = create<StockState>()(
   persist(
     (set, get) => ({
       ...initialState,
-      
+
       // Computed values from current symbol cache
       get position() {
         const { currentSymbol, symbolDataCache } = get();
         if (!currentSymbol) return null;
         return symbolDataCache[currentSymbol]?.position || null;
       },
-      
+
       get scenarios() {
         const { currentSymbol, symbolDataCache } = get();
         if (!currentSymbol) return [];
         return symbolDataCache[currentSymbol]?.scenarios || [];
       },
-      
+
       // Set current symbol and load cached data
       setCurrentSymbol: (symbol) => {
         set({ currentSymbol: symbol });
       },
-      
+
       // Set full position for current symbol
       setPosition: (position) => {
         const { currentSymbol, symbolDataCache } = get();
         if (!currentSymbol) return;
-        
+
         const currentData = symbolDataCache[currentSymbol] || { position: null, scenarios: [] };
         set({
           symbolDataCache: {
@@ -95,15 +79,15 @@ export const useStockStore = create<StockState>()(
           },
         });
       },
-      
+
       // Update position partially for current symbol
       updatePosition: (updates) => {
         const { currentSymbol, symbolDataCache } = get();
         if (!currentSymbol) return;
-        
+
         const currentData = symbolDataCache[currentSymbol];
         if (!currentData?.position) return;
-        
+
         set({
           symbolDataCache: {
             ...symbolDataCache,
@@ -114,19 +98,19 @@ export const useStockStore = create<StockState>()(
           },
         });
       },
-      
+
       // Add a new scenario for current symbol
       addScenario: (sellPrice) => {
         const { currentSymbol, symbolDataCache } = get();
         if (!currentSymbol) return;
-        
+
         const newScenario: StockScenario = {
           id: generateId(),
           sellPrice,
           sellFeePercent: DEFAULT_SELL_FEE_PERCENT,
           taxPercent: DEFAULT_SELL_TAX_PERCENT,
         };
-        
+
         const currentData = symbolDataCache[currentSymbol] || { position: null, scenarios: [] };
         set({
           symbolDataCache: {
@@ -138,15 +122,15 @@ export const useStockStore = create<StockState>()(
           },
         });
       },
-      
+
       // Update an existing scenario for current symbol
       updateScenario: (id, updates) => {
         const { currentSymbol, symbolDataCache } = get();
         if (!currentSymbol) return;
-        
+
         const currentData = symbolDataCache[currentSymbol];
         if (!currentData) return;
-        
+
         set({
           symbolDataCache: {
             ...symbolDataCache,
@@ -159,15 +143,15 @@ export const useStockStore = create<StockState>()(
           },
         });
       },
-      
+
       // Remove a scenario for current symbol
       removeScenario: (id) => {
         const { currentSymbol, symbolDataCache } = get();
         if (!currentSymbol) return;
-        
+
         const currentData = symbolDataCache[currentSymbol];
         if (!currentData) return;
-        
+
         set({
           symbolDataCache: {
             ...symbolDataCache,
@@ -178,15 +162,15 @@ export const useStockStore = create<StockState>()(
           },
         });
       },
-      
+
       // Clear all scenarios for current symbol
       clearScenarios: () => {
         const { currentSymbol, symbolDataCache } = get();
         if (!currentSymbol) return;
-        
+
         const currentData = symbolDataCache[currentSymbol];
         if (!currentData) return;
-        
+
         set({
           symbolDataCache: {
             ...symbolDataCache,
@@ -197,7 +181,7 @@ export const useStockStore = create<StockState>()(
           },
         });
       },
-      
+
       // Reset to initial state
       reset: () => set(initialState),
     }),

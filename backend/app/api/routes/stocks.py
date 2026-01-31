@@ -6,7 +6,7 @@ from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query
 import logging
 
-from app.services.iboard_client import get_iboard_client, StockData
+from app.services.iboard_client import get_iboard_client
 from app.schemas.stock import (
     StockItem,
     StockListResponse,
@@ -16,46 +16,6 @@ from app.schemas.stock import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/stocks", tags=["stocks"])
-
-
-def stock_data_to_item(s: StockData) -> StockItem:
-    """Convert StockData from iBoard client to StockItem schema."""
-    return StockItem(
-        symbol=s.symbol,
-        name=s.name,
-        name_en=s.name_en,
-        exchange=s.exchange,
-        board_id=s.board_id,
-        current_price=s.current_price,
-        ref_price=s.ref_price,
-        ceiling=s.ceiling,
-        floor=s.floor,
-        open_price=s.open_price,
-        high_price=s.high_price,
-        low_price=s.low_price,
-        avg_price=s.avg_price,
-        change=s.change,
-        change_percent=s.change_percent,
-        volume=s.volume,
-        value=s.value,
-        bid1_price=s.bid1_price,
-        bid1_vol=s.bid1_vol,
-        bid2_price=s.bid2_price,
-        bid2_vol=s.bid2_vol,
-        bid3_price=s.bid3_price,
-        bid3_vol=s.bid3_vol,
-        ask1_price=s.ask1_price,
-        ask1_vol=s.ask1_vol,
-        ask2_price=s.ask2_price,
-        ask2_vol=s.ask2_vol,
-        ask3_price=s.ask3_price,
-        ask3_vol=s.ask3_vol,
-        foreign_buy_vol=s.foreign_buy_vol,
-        foreign_sell_vol=s.foreign_sell_vol,
-        foreign_remain=s.foreign_remain,
-        session=s.session,
-        trading_date=s.trading_date,
-    )
 
 
 @router.get("/", response_model=StockListResponse)
@@ -79,8 +39,7 @@ async def get_all_stocks(
         else:
             stocks_data = await client.get_all_stocks()
         
-        # Convert to schema using helper function
-        stocks = [stock_data_to_item(s) for s in stocks_data]
+        stocks = list(stocks_data)
         
         # Apply search filter
         if search:
@@ -131,7 +90,7 @@ async def get_stocks_by_exchange(
     if exchange_lower == "vn30":
         try:
             stocks_data = await client.get_vn30_stocks()
-            stocks = [stock_data_to_item(s) for s in stocks_data]
+            stocks = list(stocks_data)
         except Exception as e:
             logger.error(f"Error fetching VN30 stocks: {e}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -140,7 +99,7 @@ async def get_stocks_by_exchange(
     else:
         try:
             stocks_data = await client.get_stocks(exchange_lower)
-            stocks = [stock_data_to_item(s) for s in stocks_data]
+            stocks = list(stocks_data)
         except Exception as e:
             logger.error(f"Error fetching stocks from {exchange}: {e}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -230,7 +189,7 @@ async def get_stock_detail(symbol: str):
         if not stock:
             raise HTTPException(status_code=404, detail=f"Stock {symbol} not found")
         
-        return StockDetailResponse(stock=stock_data_to_item(stock))
+        return StockDetailResponse(stock=stock)
         
     except HTTPException:
         raise

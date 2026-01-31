@@ -5,6 +5,7 @@ import { InputNumber, Button, Tooltip, Tag, Typography } from "antd";
 import { DeleteOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { formatVND, formatPercent } from "@/utils";
+import { AppColors } from "@/utils/theme";
 import type { FeeSettings } from "@/stores/useWarrantStore";
 import type { ScenarioRow } from "@/types";
 
@@ -26,17 +27,25 @@ const RoiCell = React.memo(function RoiCell({
 }) {
     const absValue = Math.abs(value);
     const barWidth = Math.min(absValue, 100);
+    
+    // Use inline styles for consistent colors in both themes
+    const tagStyle = {
+        backgroundColor: isProfit ? 'rgba(22, 163, 74, 0.15)' : 'rgba(220, 38, 38, 0.15)',
+        color: isProfit ? '#16a34a' : '#dc2626',
+        border: `1px solid ${isProfit ? 'rgba(22, 163, 74, 0.3)' : 'rgba(220, 38, 38, 0.3)'}`,
+    };
+    
     return (
         <div className="space-y-1">
             <div className="flex items-center justify-end gap-2">
-                <Tag color={isProfit ? "success" : "error"} className="font-semibold m-0">
+                <Tag className="font-semibold m-0 dark:!bg-transparent" style={tagStyle}>
                     {formatPercent(value)}
                 </Tag>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
                 <div
-                    className={`h-1.5 rounded-full transition-all ${isProfit ? "bg-green-500" : "bg-red-500"}`}
-                    style={{ width: `${barWidth}%` }}
+                    className="h-1.5 rounded-full transition-all"
+                    style={{ width: `${barWidth}%`, backgroundColor: isProfit ? '#16a34a' : '#dc2626' }}
                 />
             </div>
         </div>
@@ -50,11 +59,15 @@ const ProfitCell = React.memo(function ProfitCell({
     value: number;
     isProfit: boolean;
 }) {
+    const bgClass = isProfit
+        ? "!bg-green-100 !text-green-700 !border-green-300 dark:!bg-green-900/40 dark:!text-green-400 dark:!border-green-800"
+        : "!bg-red-100 !text-red-700 !border-red-300 dark:!bg-red-900/40 dark:!text-red-400 dark:!border-red-800";
+
     return (
-        <div className={`px-2 py-1 rounded ${isProfit ? "bg-green-50" : "bg-red-50"}`}>
-            <Text strong className={isProfit ? "text-green-600" : "text-red-600"}>
-                {value >= 0 ? "+" : ""}{formatVND(value)}
-            </Text>
+        <div
+            className={`px-2 py-1 rounded font-bold text-right inline-block min-w-[90px] border ${bgClass}`}
+        >
+            {value >= 0 ? "+" : ""}{formatVND(value)}
         </div>
     );
 });
@@ -161,10 +174,10 @@ export function getWarrantScenarioColumns({
                     <Button
                         type="text"
                         danger
-                        icon={<DeleteOutlined />}
+                        icon={<DeleteOutlined className="dark:!text-red-400" />}
                         size="small"
                         onClick={() => onRemoveScenario(record.id)}
-                        className="hover:bg-red-50"
+                        className="hover:!bg-red-50 dark:hover:!bg-red-900/30"
                     />
                 </Tooltip>
             ),
@@ -267,10 +280,10 @@ export function getStockScenarioColumns({
                     <Button
                         type="text"
                         danger
-                        icon={<DeleteOutlined />}
+                        icon={<DeleteOutlined className="dark:!text-red-400" />}
                         size="small"
                         onClick={() => onRemoveScenario(record.id)}
-                        className="hover:bg-red-50"
+                        className="hover:!bg-red-50 dark:hover:!bg-red-900/30"
                     />
                 </Tooltip>
             ),

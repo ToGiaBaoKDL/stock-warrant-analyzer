@@ -219,6 +219,64 @@ export function calculateBreakEven(
 }
 
 /**
+ * Calculate break-even price for a stock trade
+ * 
+ * Formula: BreakEven = (Principal + BuyFee + SellFee + SellTax) / Quantity
+ * Note: SellFee and SellTax depend on the SellPrice, but at break-even, SellPrice = BreakEvenPrice
+ * So: P * Q = BuyCost + (P * Q * SellFee%) + (P * Q * Tax%)
+ * P * Q * (1 - SellFee% - Tax%) = BuyCost
+ * P = BuyCost / (Q * (1 - SellFee% - Tax%))
+ * 
+ * However, the "simple" break-even often used is just cost basis per share, 
+ * but a true break-even must cover the selling costs too.
+ * 
+ * The implementation in the hook was:
+ * (Principal + BuyFee + TotalSellCosts) / Quantity
+ * But "TotalSellCosts" depends on the sell price.
+ * 
+ * Let's implement the rigorous formula if possible, or stick to the hook's approximation 
+ * if it was using a specific target price.
+ * 
+ * Looking at the hook's logic:
+ * const sellFee = (scenario.sellPrice * position.quantity * feeSettings.sellFeePercent) / 100;
+ * 
+ * It calculates break-even for a SPECIFIC SCENARIO row? No, it says "Break-even for stocks".
+ * And the code was:
+ * breakEvenPrice = position.quantity > 0 ? (principal + totalCosts) / position.quantity : 0;
+ * 
+ * Wait, in the hook:
+ * const sellFee = (scenario.sellPrice * ... )
+ * It uses the SCENARIO sell price to calculate "totalCosts".
+ * This means "Break-Even Price" in that context was likely "Price required to break even GIVEN the selling costs of this scenario", 
+ * which is circular if we are solving for X.
+ * 
+ * ACTUALLY, strict break-even price X is where:
+ * Profit = 0
+ * Revenue - Cost = 0
+ * (X * Q) * (1 - SellFee% - Tax%) - TotalBuyCost = 0
+ * X = TotalBuyCost / (Q * (1 - SellFee% - Tax%))
+ */
+export function calculateStockBreakEven(
+  buyPrice: number,
+  quantity: number,
+  buyFeePercent: number = DEFAULT_BUY_FEE_PERCENT,
+  sellFeePercent: number = DEFAULT_SELL_FEE_PERCENT,
+  taxPercent: number = DEFAULT_SELL_TAX_PERCENT
+): number {
+  if (quantity <= 0) return 0;
+
+  const totalBuyCost = calculateCost(buyPrice, quantity, buyFeePercent).totalCost;
+
+  // Denominator: Q * (1 - (SellFee + SellingTax))
+  // SellFee and Tax are percentages of the GROSS sell value.
+  const netRatio = 1 - (sellFeePercent / 100) - (taxPercent / 100);
+
+  if (netRatio <= 0) return 0; // Avoid division by zero or invalid negative result
+
+  return totalBuyCost / (quantity * netRatio);
+}
+
+/**
  * Calculate exercise value and related metrics for a warrant
  *
  * Used to determine the value if warrant is held to maturity.

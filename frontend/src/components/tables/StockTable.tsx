@@ -8,14 +8,13 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient, endpoints } from "@/lib/api-client";
 import { pollingIntervals } from "@/lib/query-client";
 import type { StockItem, StockListResponse } from "@/types/api";
-import { formatVND, formatVolume, getPriceColorClass, getRefetchInterval } from "@/utils";
-import { ExportButtons } from "@/components";
+import { formatVND, formatVolume, getFullPriceColorHex, getRefetchInterval } from "@/utils";
+import { AppColors } from "@/utils/theme";
+import { ExportButtons, SparklineCell } from "@/components";
 
 const { Text } = Typography;
 
-// ============================================
-// Types
-// ============================================
+
 
 export interface StockTableProps {
     /** Exchange code (e.g., 'hose', 'hnx', 'upcom') */
@@ -26,9 +25,7 @@ export interface StockTableProps {
 
 type SortOrder = "asc" | "desc";
 
-// ============================================
-// Column Definitions (Static)
-// ============================================
+
 
 const EXPORT_COLUMNS = [
     { key: "symbol", title: "Mã" },
@@ -47,14 +44,6 @@ const SORT_OPTIONS = [
     { value: "value", label: "Giá trị" },
 ];
 
-// ============================================
-// Component
-// ============================================
-
-/**
- * StockTable - Displays stock data for a specific exchange
- * Extracted from app/page.tsx for reusability and maintainability
- */
 export const StockTable = React.memo(function StockTable({
     exchange,
     label,
@@ -92,11 +81,11 @@ export const StockTable = React.memo(function StockTable({
             );
         }
 
-        // Sort
-        if (sortField) {
+        // Sort - only sort numeric fields
+        if (sortField && ['volume', 'change_percent', 'value', 'current_price'].includes(sortField)) {
             stocks.sort((a, b) => {
-                const aVal = a[sortField as keyof StockItem] as number;
-                const bVal = b[sortField as keyof StockItem] as number;
+                const aVal = (a[sortField as keyof StockItem] as number) ?? 0;
+                const bVal = (b[sortField as keyof StockItem] as number) ?? 0;
                 return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
             });
         }
@@ -116,7 +105,8 @@ export const StockTable = React.memo(function StockTable({
                 render: (symbol: string, record: StockItem) => (
                     <Link
                         href={`/analysis/${symbol}`}
-                        className={`font-semibold ${getPriceColorClass(record.change)} hover:opacity-80`}
+                        className="font-semibold hover:opacity-80"
+                        style={{ color: getFullPriceColorHex(record.current_price, record.ref_price, record.ceiling, record.floor) }}
                     >
                         {symbol}
                     </Link>
@@ -136,7 +126,7 @@ export const StockTable = React.memo(function StockTable({
                 width: 100,
                 align: "right" as const,
                 render: (price: number, record: StockItem) => (
-                    <span className={getPriceColorClass(record.change)}>{formatVND(price)}</span>
+                    <span style={{ color: getFullPriceColorHex(price, record.ref_price, record.ceiling, record.floor) }}>{formatVND(price)}</span>
                 ),
             },
             {
@@ -146,11 +136,37 @@ export const StockTable = React.memo(function StockTable({
                 width: 80,
                 align: "right" as const,
                 sorter: true,
-                render: (percent: number) => (
-                    <span className={getPriceColorClass(percent)}>
-                        {percent > 0 ? "+" : ""}
-                        {percent.toFixed(2)}%
-                    </span>
+                render: (percent: number, record: StockItem) => {
+                    const color = getFullPriceColorHex(record.current_price, record.ref_price, record.ceiling, record.floor);
+                    const absChange = record.change || 0;
+                    return (
+                        <div className="flex flex-col items-end leading-tight">
+                            <span style={{ color }}>
+                                {absChange >= 0 ? "+" : ""}{absChange.toLocaleString()}
+                            </span>
+                            <span style={{ color }} className="text-xs">
+                                {percent >= 0 ? "+" : ""}{percent.toFixed(2)}%
+                            </span>
+                        </div>
+                    );
+                },
+            },
+            {
+                title: "Trend",
+                dataIndex: "symbol",
+                key: "trend",
+                width: 90,
+                align: "center" as const,
+                render: (symbol: string, record: StockItem) => (
+                    <SparklineCell
+                        symbol={symbol}
+                        currentPrice={record.current_price}
+                        refPrice={record.ref_price}
+                        ceiling={record.ceiling}
+                        floor={record.floor}
+                        width={80}
+                        height={24}
+                    />
                 ),
             },
             {
@@ -176,7 +192,7 @@ export const StockTable = React.memo(function StockTable({
                 key: "ceiling",
                 width: 90,
                 align: "right" as const,
-                render: (price: number) => <span className="text-purple-600">{formatVND(price)}</span>,
+                render: (price: number) => <span style={{ color: "var(--color-ceiling)" }}>{formatVND(price)}</span>,
             },
             {
                 title: "Sàn",
@@ -184,7 +200,7 @@ export const StockTable = React.memo(function StockTable({
                 key: "floor",
                 width: 90,
                 align: "right" as const,
-                render: (price: number) => <span className="text-cyan-600">{formatVND(price)}</span>,
+                render: (price: number) => <span style={{ color: "var(--color-floor)" }}>{formatVND(price)}</span>,
             },
             {
                 title: "NN Mua",
@@ -237,21 +253,28 @@ export const StockTable = React.memo(function StockTable({
             <div className="flex flex-wrap items-center gap-4">
                 <Input
                     placeholder="Tìm mã hoặc tên..."
-                    prefix={<SearchOutlined className="text-gray-400" />}
+                    prefix={<SearchOutlined className="text-gray-400 dark:text-gray-500" />}
                     value={search}
                     onChange={handleSearchChange}
                     style={{ width: 200 }}
                     allowClear
                 />
-                <Select
-                    placeholder="Sắp xếp"
-                    style={{ width: 140 }}
-                    allowClear
-                    value={sortField}
-                    onChange={handleSortChange}
-                    options={SORT_OPTIONS}
-                />
-                <Button icon={<ReloadOutlined spin={isFetching} />} onClick={() => refetch()}>
+                <div className="relative inline-block w-[140px]">
+                    <Select
+                        placeholder="Sắp xếp"
+                        style={{ width: '100%' }}
+                        allowClear
+                        value={sortField}
+                        onChange={handleSortChange}
+                        options={SORT_OPTIONS}
+                        className="w-full [&.ant-select-single_.ant-select-selector]:!pl-9"
+                    />
+                </div>
+                <Button
+                    icon={<ReloadOutlined spin={isFetching} />}
+                    onClick={() => refetch()}
+                    style={{ color: AppColors.primary, borderColor: AppColors.primary }}
+                >
                     Làm mới
                 </Button>
                 <ExportButtons

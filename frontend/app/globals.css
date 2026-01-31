@@ -8,21 +8,21 @@
   --primary-500: #CC785C;
   --primary-600: #b5654a;
   --primary-700: #9e5239;
-  
+
   /* Success Colors - Soft Sage */
   --success-50: #f0f7f4;
   --success-500: #5a9f7c;
   --success-600: #4a8a6a;
-  
+
   /* Danger Colors - Soft Rose */
   --danger-50: #fdf4f4;
   --danger-500: #c75050;
   --danger-600: #b04040;
-  
+
   /* Warning Colors - Warm Amber */
   --warning-50: #fefcf3;
   --warning-500: #d4a84b;
-  
+
   /* Neutral Colors - Anthropic palette */
   --background: #F5F4EF;
   --foreground: #191919;
@@ -30,19 +30,340 @@
   --border: #E5E3DB;
   --muted: #6b6b6b;
   --subtle: #9a9a9a;
+
+  /* Semantic UI Colors */
+  --table-header-bg: #fafaf8;
+  --table-border: #E5E3DB;
+  --table-row-hover: #fafaf8;
+  --btn-primary-bg: #191919;
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover: #333333;
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-thumb: #c0c0c0;
+  --scrollbar-thumb-hover: #a0a0a0;
+  --input-focus-border: var(--primary-500);
+  --header-bg: #191919;
+  --alert-info-bg: var(--primary-50);
+  --alert-info-border: #f0e6e0;
+  --menu-item-hover: rgba(255, 255, 255, 0.1);
+  --menu-item-selected: rgba(255, 255, 255, 0.15);
+
+  /* Financial Semantic Colors */
+  --color-ceiling: #9333ea;
+  --color-floor: #0891b2;
+  --color-ref: #d97706;
+  --color-up: #16a34a;
+  --color-down: #dc2626;
+
+  /* Gradients */
+  --gradient-soft-from: #f8fafc;
+  --gradient-soft-to: #ffffff;
+  --gradient-header: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+  --gradient-primary: linear-gradient(135deg, var(--primary-500) 0%, #a85d45 100%);
+  --gradient-primary-horizontal: linear-gradient(to right, var(--primary-500), #a85d45);
+
+  /* Scenario Table Classes */
+  --row-profit-bg: #f0fdf4;
+  --row-profit-hover: #dcfce7;
+  --row-profit-text: #16a34a;
+  --row-loss-bg: #fef2f2;
+  --row-loss-hover: #fee2e2;
+  --row-loss-text: #dc2626;
 }
+
+/* Dark Theme Variables */
+.dark {
+  /* Base Colors */
+  --background: #121212;
+  /* Darker than gray-900 to reduce OLED smearing */
+  --foreground: #e5e7eb;
+  /* gray-200 */
+  --card-bg: #1f1f1f;
+  --card-border: #374151;
+  /* gray-700 */
+
+  --table-header-bg: #2a2a2a;
+  /* Slightly elevated */
+  --row-hover-bg: #2a2a2a;
+
+  /* Semantics - Brighter for dark mode visibility */
+  --profit-bg: rgba(74, 222, 128, 0.1);
+  --loss-bg: rgba(248, 113, 113, 0.1);
+
+  /* Container overrides */
+  --bg-primary-50: #2a2a2a;
+  /* was white/light in light mode, dark gray in dark */
+  --bg-green-50: rgba(74, 222, 128, 0.1);
+  --bg-red-50: rgba(248, 113, 113, 0.1);
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+
+  /* Financial Semantics - Adjusted for dark contrast (Brighter/Pastel) */
+  --color-ceiling: #e879f9;
+  /* purple-400 */
+  --color-floor: #22d3ee;
+  /* cyan-400 */
+  --color-ref: #facc15;
+  /* yellow-400 */
+  --color-up: #4ade80;
+  /* green-400 */
+  --color-down: #ff5252;
+  /* red-accent */
+
+  /* Gradients */
+  --gradient-soft-from: #121212;
+  --gradient-soft-to: #1a1a1a;
+  --gradient-header: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  /* Starker header */
+
+  /* Scenario Table Classes - Dark Mode */
+  --row-profit-bg: rgba(22, 163, 74, 0.15);
+  --row-profit-hover: rgba(22, 163, 74, 0.25);
+  --row-profit-text: #4ade80;
+  --row-loss-bg: rgba(220, 38, 38, 0.15);
+  --row-loss-hover: rgba(220, 38, 38, 0.25);
+  --row-loss-text: #f87171;
+
+  /* Button Overrides for Dark Mode - Fix "Black on Black" */
+  --btn-primary-bg: var(--primary-500);
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover: var(--primary-600);
+
+  /* Alert Overrides for Dark Mode */
+  --alert-info-bg: rgba(59, 130, 246, 0.1);
+  --alert-info-border: rgba(59, 130, 246, 0.3);
+}
+
+/* Dark Theme Variables (Placeholder for future activation) */
+/* .dark { ... } will be populated in Phase 2 */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Extend generic colors */
+  --color-primary-50: var(--primary-50);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-success-600: var(--success-600);
+  --color-danger-600: var(--danger-600);
+
+  /* Financial Semantics */
+  --color-ceiling: var(--color-ceiling);
+  --color-floor: var(--color-floor);
+  --color-ref: var(--color-ref);
+  --color-up: var(--color-up);
+  --color-down: var(--color-down);
 }
 
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
+
+
+/* Force dark mode background and text for Ant Design components */
+.dark .ant-layout,
+.dark .ant-layout-header,
+.dark .ant-layout-content,
+.dark .ant-layout-footer {
+  background: #121212 !important;
+}
+
+.dark .ant-card,
+.dark .ant-card-bordered {
+  background: #1f1f1f !important;
+  border-color: #374151 !important;
+}
+
+.dark .ant-table-thead>tr>th {
+  background: #2a2a2a !important;
+  color: #e5e7eb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.dark .ant-table-tbody>tr>td {
+  background: #1f1f1f !important;
+  color: #e5e7eb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+/* Fix white hover on dark rows */
+.dark .ant-table-tbody>tr:hover>td {
+  background: #2d2d2d !important;
+}
+
+/* Fix Input/Select backgrounds */
+.dark .ant-input,
+.dark .ant-input-number,
+.dark .ant-input-number-input,
+.dark .ant-select-selector,
+.dark .ant-pagination-item-link,
+.dark .ant-pagination-item {
+  background-color: #1f1f1f !important;
+  border-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+.dark .ant-select-arrow,
+.dark .ant-select-clear {
+  color: #9ca3af !important;
+}
+
+/* Fix Typography */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark .ant-typography {
+  color: #e5e7eb !important;
+}
+
+.dark .ant-typography-secondary {
+  color: #9ca3af !important;
+}
+
+/* Alert Dark Mode Fixes */
+.dark .ant-alert {
+  background-color: #1f1f1f !important;
+  border-color: #374151 !important;
+}
+
+.dark .ant-alert-message {
+  color: #e5e7eb !important;
+}
+
+.dark .ant-alert-description {
+  color: #9ca3af !important;
+}
+
+.dark .ant-alert-info {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .ant-alert-warning {
+  background-color: rgba(234, 179, 8, 0.1) !important;
+  border-color: rgba(234, 179, 8, 0.2) !important;
+}
+
+.dark .ant-alert-error {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Tabs Dark Mode */
+.dark .ant-tabs-tab {
+  color: #9ca3af !important;
+}
+
+.dark .ant-tabs-tab:hover {
+  color: #e5e7eb !important;
+}
+
+.dark .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--primary-500) !important;
+}
+
+.dark .ant-tabs-ink-bar {
+  background: var(--primary-500) !important;
+}
+
+/* Segmented Dark Mode */
+.dark .ant-segmented {
+  background: #2a2a2a !important;
+  color: #9ca3af !important;
+}
+
+.dark .ant-segmented-item-label {
+  color: #9ca3af !important;
+}
+
+.dark .ant-segmented-item:hover {
+  color: #e5e7eb !important;
+}
+
+.dark .ant-segmented-item-selected {
+  background: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+.dark .ant-segmented-item-selected .ant-segmented-item-label {
+  color: #e5e7eb !important;
+}
+
+/* Tooltip Dark Mode */
+.dark .ant-tooltip-inner {
+  background: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+.dark .ant-tooltip-arrow::before {
+  background: #374151 !important;
+}
+
+/* Dropdown Dark Mode */
+.dark .ant-select-dropdown {
+  background: #1f1f1f !important;
+  border: 1px solid #374151 !important;
+}
+
+.dark .ant-select-item {
+  color: #e5e7eb !important;
+}
+
+.dark .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background: #2a2a2a !important;
+}
+
+.dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: #374151 !important;
+}
+
+/* Empty State Dark Mode */
+.dark .ant-empty-description {
+  color: #9ca3af !important;
+}
+
+/* Modal Dark Mode */
+.dark .ant-modal-content {
+  background: #1f1f1f !important;
+  border: 1px solid #374151 !important;
+}
+
+.dark .ant-modal-header {
+  background: #1f1f1f !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.dark .ant-modal-title {
+  color: #e5e7eb !important;
+}
+
+.dark .ant-modal-close-x {
+  color: #9ca3af !important;
+}
+
+/* Collapse/Accordion Dark Mode */
+.dark .ant-collapse {
+  background: #1f1f1f !important;
+  border-color: #374151 !important;
+}
+
+.dark .ant-collapse-header {
+  color: #e5e7eb !important;
+}
+
+.dark .ant-collapse-content {
+  background: #1f1f1f !important;
+  border-color: #374151 !important;
+}
+
+/* Scenario Table Custom Classes - REMOVED (Moved to Tailwind cell utils) */
+
 
 body {
   background: var(--background);
@@ -60,17 +381,30 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--scrollbar-track);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c0c0c0;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a0a0a0;
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1f1f1f;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 /* Ant Design Customizations - Clean minimal style */
@@ -86,36 +420,40 @@ body {
   transition: border-color 0.2s ease;
 }
 
+.dark .ant-card:hover {
+  border-color: #4b5563 !important;
+}
+
 .ant-table {
   border-radius: 8px !important;
 }
 
-.ant-table-thead > tr > th {
-  background: #fafaf8 !important;
+.ant-table-thead>tr>th {
+  background: var(--table-header-bg) !important;
   font-weight: 600 !important;
-  color: #4a4a4a !important;
+  color: var(--foreground) !important;
   border-bottom: 1px solid var(--border) !important;
 }
 
-.ant-table-tbody > tr:hover > td {
-  background: #fafaf8 !important;
+.ant-table-tbody>tr:hover>td {
+  background: var(--table-row-hover) !important;
 }
 
 /* Profit row highlight */
-.ant-table-tbody > tr.bg-green-50 > td {
+.ant-table-tbody>tr.bg-green-50>td {
   background: #f0fdf4 !important;
 }
 
-.ant-table-tbody > tr.bg-green-50:hover > td {
+.ant-table-tbody>tr.bg-green-50:hover>td {
   background: #dcfce7 !important;
 }
 
 /* Loss row highlight */
-.ant-table-tbody > tr.bg-red-50 > td {
+.ant-table-tbody>tr.bg-red-50>td {
   background: #fef2f2 !important;
 }
 
-.ant-table-tbody > tr.bg-red-50:hover > td {
+.ant-table-tbody>tr.bg-red-50:hover>td {
   background: #fee2e2 !important;
 }
 
@@ -126,13 +464,14 @@ body {
 }
 
 .ant-btn-primary {
-  background: #191919 !important;
-  border-color: #191919 !important;
+  background: var(--btn-primary-bg) !important;
+  border-color: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
 }
 
 .ant-btn-primary:hover {
-  background: #333 !important;
-  border-color: #333 !important;
+  background: var(--btn-primary-hover) !important;
+  border-color: var(--btn-primary-hover) !important;
   transform: translateY(-1px);
 }
 
@@ -149,7 +488,13 @@ body {
 .ant-input-number-input::placeholder,
 .ant-select-selection-placeholder {
   font-size: 14px !important;
-  color: #9a9a9a !important;
+  color: #9ca3af !important;
+}
+
+.dark .ant-input::placeholder,
+.dark .ant-input-number-input::placeholder,
+.dark .ant-select-selection-placeholder {
+  color: #6b7280 !important;
 }
 
 .ant-input-lg::placeholder,
@@ -159,7 +504,7 @@ body {
 
 /* Header styling - Clean dark */
 .ant-layout-header {
-  background: #191919 !important;
+  background: var(--header-bg) !important;
 }
 
 /* Statistics styling */
@@ -178,14 +523,88 @@ body {
   font-weight: 500 !important;
 }
 
+/* Dark mode Tags - Brighter backgrounds for better visibility */
+.dark .ant-tag-blue {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  color: #93c5fd !important;
+}
+
+.dark .ant-tag-green {
+  background-color: rgba(34, 197, 94, 0.25) !important;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  color: #86efac !important;
+}
+
+.dark .ant-tag-red {
+  background-color: rgba(239, 68, 68, 0.25) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  color: #fca5a5 !important;
+}
+
+.dark .ant-tag-orange {
+  background-color: rgba(249, 115, 22, 0.25) !important;
+  border-color: rgba(249, 115, 22, 0.5) !important;
+  color: #fdba74 !important;
+}
+
+.dark .ant-tag-purple {
+  background-color: rgba(168, 85, 247, 0.25) !important;
+  border-color: rgba(168, 85, 247, 0.5) !important;
+  color: #d8b4fe !important;
+}
+
+.dark .ant-tag-cyan {
+  background-color: rgba(6, 182, 212, 0.25) !important;
+  border-color: rgba(6, 182, 212, 0.5) !important;
+  color: #67e8f9 !important;
+}
+
+.dark .ant-tag-gold,
+.dark .ant-tag-yellow {
+  background-color: rgba(234, 179, 8, 0.25) !important;
+  border-color: rgba(234, 179, 8, 0.5) !important;
+  color: #fde047 !important;
+}
+
+.dark .ant-tag-magenta {
+  background-color: rgba(236, 72, 153, 0.25) !important;
+  border-color: rgba(236, 72, 153, 0.5) !important;
+  color: #f9a8d4 !important;
+}
+
+.dark .ant-tag-volcano {
+  background-color: rgba(249, 115, 22, 0.25) !important;
+  border-color: rgba(249, 115, 22, 0.5) !important;
+  color: #fed7aa !important;
+}
+
+.dark .ant-tag-geekblue {
+  background-color: rgba(99, 102, 241, 0.25) !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  color: #c7d2fe !important;
+}
+
+.dark .ant-tag-lime {
+  background-color: rgba(132, 204, 22, 0.25) !important;
+  border-color: rgba(132, 204, 22, 0.5) !important;
+  color: #bef264 !important;
+}
+
+.dark .ant-tag-default {
+  background-color: rgba(107, 114, 128, 0.25) !important;
+  border-color: rgba(107, 114, 128, 0.5) !important;
+  color: #d1d5db !important;
+}
+
 /* Alert styling */
 .ant-alert {
   border-radius: 8px !important;
 }
 
 .ant-alert-info {
-  background: var(--primary-50) !important;
-  border-color: #f0e6e0 !important;
+  background: var(--alert-info-bg) !important;
+  border-color: var(--alert-info-border) !important;
 }
 
 /* Select dropdown */
@@ -203,11 +622,24 @@ body {
   color: #CC785C;
 }
 
-/* Smooth transitions */
-* {
-  transition-property: color, background-color, border-color;
-  transition-duration: 0.15s;
-  transition-timing-function: ease;
+/* Smooth but fast theme transitions - optimized for performance */
+*,
+*::before,
+*::after {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 75ms;
+  transition-timing-function: ease-out;
+}
+
+/* Disable transitions for elements that shouldn't animate */
+.no-transition,
+.ant-table-cell,
+.ant-table-row,
+input,
+textarea,
+.ant-input,
+.ant-input-number-input {
+  transition: none !important;
 }
 
 /* Affix shadow */
@@ -222,11 +654,11 @@ body {
 
 /* Menu hover */
 .ant-menu-dark .ant-menu-item:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: var(--menu-item-hover) !important;
 }
 
 .ant-menu-dark .ant-menu-item-selected {
-  background: rgba(255, 255, 255, 0.15) !important;
+  background: var(--menu-item-selected) !important;
 }
 
 /* ============================================
@@ -239,34 +671,34 @@ body {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   .ant-input,
   .ant-input-number,
   .ant-select-selector {
     min-height: 44px !important;
   }
-  
+
   /* Stack cards on mobile */
   .ant-card {
     margin-bottom: 12px;
   }
-  
+
   /* Better table scrolling on mobile */
   .ant-table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   /* Larger font for readability */
   .ant-statistic-content {
     font-size: 24px !important;
   }
-  
+
   /* Full-width buttons on mobile */
   .mobile-full-width {
     width: 100% !important;
   }
-  
+
   /* Sticky header adjustments */
   .ant-affix {
     left: 0 !important;
@@ -284,6 +716,7 @@ body {
 
 /* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -299,7 +732,7 @@ body {
     border-width: 2px !important;
     border-color: #000 !important;
   }
-  
+
   .ant-btn-primary {
     border: 2px solid #000 !important;
   }
@@ -320,7 +753,7 @@ body {
 }
 
 .bg-gradient-soft {
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  background: linear-gradient(180deg, var(--gradient-soft-from) 0%, var(--gradient-soft-to) 100%);
 }
 
 /* Text colors */
@@ -351,12 +784,13 @@ body {
 
 /* Print styles */
 @media print {
+
   .ant-layout-header,
   .ant-affix,
   .ant-btn {
     display: none !important;
   }
-  
+
   .ant-card {
     box-shadow: none !important;
     border: 1px solid #ccc !important;

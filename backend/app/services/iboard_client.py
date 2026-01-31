@@ -39,134 +39,11 @@ class CacheTTL:
 
 
 # =============================================================================
-# Pydantic Models
+# Import Schemas (reuse API response models)
 # =============================================================================
 
-class StockData(BaseModel):
-    """Stock data from iBoard API"""
-    symbol: str
-    name: str = ""
-    name_en: str = ""
-    exchange: str = ""
-    board_id: str = "MAIN"
-    
-    # Prices
-    current_price: float = 0.0
-    ref_price: float = 0.0
-    ceiling: float = 0.0
-    floor: float = 0.0
-    open_price: float = 0.0
-    high_price: float = 0.0
-    low_price: float = 0.0
-    avg_price: float = 0.0
-    
-    # Changes
-    change: float = 0.0
-    change_percent: float = 0.0
-    
-    # Volume
-    volume: int = 0
-    value: float = 0.0
-    
-    # Order book
-    bid1_price: float = 0.0
-    bid1_vol: int = 0
-    bid2_price: float = 0.0
-    bid2_vol: int = 0
-    bid3_price: float = 0.0
-    bid3_vol: int = 0
-    ask1_price: float = 0.0
-    ask1_vol: int = 0
-    ask2_price: float = 0.0
-    ask2_vol: int = 0
-    ask3_price: float = 0.0
-    ask3_vol: int = 0
-    
-    # Foreign
-    foreign_buy_vol: int = 0
-    foreign_sell_vol: int = 0
-    foreign_remain: int = 0
-    
-    # Session info
-    session: str = ""
-    trading_date: str = ""
-    
-    class Config:
-        populate_by_name = True
-
-
-class WarrantData(BaseModel):
-    """Covered Warrant data from iBoard API"""
-    symbol: str
-    underlying_symbol: str = ""
-    issuer_name: str = ""
-    warrant_type: str = "C"  # C = Call, P = Put
-    
-    # Prices
-    current_price: float = 0.0
-    ref_price: float = 0.0
-    ceiling: float = 0.0
-    floor: float = 0.0
-    open_price: float = 0.0
-    high_price: float = 0.0
-    low_price: float = 0.0
-    avg_price: float = 0.0
-    
-    # Changes
-    change: float = 0.0
-    change_percent: float = 0.0
-    
-    # Volume
-    volume: int = 0
-    value: float = 0.0
-    
-    # Warrant specifics
-    exercise_price: float = 0.0
-    exercise_ratio: float = 1.0  # e.g., 1.6712 means 1.6712:1
-    maturity_date: str = ""  # ISO format YYYY-MM-DD
-    last_trading_date: str = ""  # ISO format YYYY-MM-DD
-    days_to_maturity: int = 0
-    
-    # Derived conversion_ratio for frontend compatibility
-    conversion_ratio: float = 1.0  # Same as exercise_ratio
-    
-    # Order book
-    bid1_price: float = 0.0
-    bid1_vol: int = 0
-    bid2_price: float = 0.0
-    bid2_vol: int = 0
-    bid3_price: float = 0.0
-    bid3_vol: int = 0
-    ask1_price: float = 0.0
-    ask1_vol: int = 0
-    ask2_price: float = 0.0
-    ask2_vol: int = 0
-    ask3_price: float = 0.0
-    ask3_vol: int = 0
-    
-    # Foreign
-    foreign_remain: int = 0
-    
-    # Session info
-    session: str = ""
-    trading_date: str = ""
-    
-    class Config:
-        populate_by_name = True
-
-
-class UnderlyingData(BaseModel):
-    """Underlying stock data for warrants"""
-    symbol: str
-    current_price: float = 0.0
-    ref_price: float = 0.0
-    ceiling: float = 0.0
-    floor: float = 0.0
-    change: float = 0.0
-    change_percent: float = 0.0
-    
-    class Config:
-        populate_by_name = True
+from app.schemas.stock import StockItem
+from app.schemas.warrant import WarrantItem, UnderlyingInfo
 
 
 # =============================================================================
@@ -298,7 +175,7 @@ class IboardClient:
     # Stock APIs
     # -------------------------------------------------------------------------
     
-    async def get_stocks(self, exchange: str = "hose") -> List[StockData]:
+    async def get_stocks(self, exchange: str = "hose") -> List[StockItem]:
         """
         Get all stocks for an exchange with caching and resilience.
         
@@ -306,7 +183,7 @@ class IboardClient:
             exchange: Exchange code (hose, hnx, upcom)
             
         Returns:
-            List of StockData objects
+            List of StockItem objects
         """
         exchange = exchange.lower()
         if exchange not in self.VALID_EXCHANGES:
@@ -330,7 +207,7 @@ class IboardClient:
         
         return stocks
     
-    async def _fetch_stocks_from_api(self, exchange: str) -> List[StockData]:
+    async def _fetch_stocks_from_api(self, exchange: str) -> List[StockItem]:
         """Internal method to fetch stocks from iBoard API with retry and circuit breaker."""
         
         @with_retry(max_retries=3, base_delay=0.5, max_delay=5.0, exceptions=(httpx.HTTPError, Exception))
@@ -354,7 +231,7 @@ class IboardClient:
         start_time = time.time()
         
         for s in data.get('data', []):
-            stock = StockData(
+            stock = StockItem(
                 symbol=s.get('stockSymbol', ''),
                 name=s.get('companyNameVi', '') or s.get('clientName', ''),
                 name_en=s.get('companyNameEn', '') or s.get('clientNameEn', ''),
@@ -403,7 +280,7 @@ class IboardClient:
         
         return stocks
     
-    async def get_stock_by_symbol(self, symbol: str) -> Optional[StockData]:
+    async def get_stock_by_symbol(self, symbol: str) -> Optional[StockItem]:
         """
         Get a single stock by symbol.
         Uses cache from get_all_stocks for efficiency.
@@ -423,7 +300,7 @@ class IboardClient:
         
         return None
     
-    async def get_all_stocks(self) -> List[StockData]:
+    async def get_all_stocks(self) -> List[StockItem]:
         """
         Get stocks from all exchanges using parallel fetching.
         
@@ -464,12 +341,12 @@ class IboardClient:
         
         return all_stocks
     
-    async def get_vn30_stocks(self) -> List[StockData]:
+    async def get_vn30_stocks(self) -> List[StockItem]:
         """
         Get VN30 index stocks from iBoard API.
         
         Returns:
-            List of StockData for the 30 VN30 stocks
+            List of StockItem for the 30 VN30 stocks
         """
         cache_key = "stocks:vn30"
         
@@ -489,7 +366,7 @@ class IboardClient:
         
         return stocks
     
-    async def _fetch_vn30_from_api(self) -> List[StockData]:
+    async def _fetch_vn30_from_api(self) -> List[StockItem]:
         """Internal method to fetch VN30 stocks from iBoard API."""
         
         @with_retry(max_retries=3, base_delay=0.5, max_delay=5.0, exceptions=(httpx.HTTPError, Exception))
@@ -513,7 +390,7 @@ class IboardClient:
         start_time = time.time()
         
         for s in data.get('data', []):
-            stock = StockData(
+            stock = StockItem(
                 symbol=s.get('stockSymbol', ''),
                 name=s.get('companyNameVi', '') or s.get('clientName', ''),
                 name_en=s.get('companyNameEn', '') or s.get('clientNameEn', ''),
@@ -627,7 +504,7 @@ class IboardClient:
             mat_date, days = self._parse_date_ddmmyyyy(w.get('maturityDate', ''))
             exercise_ratio = self._parse_ratio(w.get('exerciseRatio', '1:1'))
             
-            warrant = WarrantData(
+            warrant = WarrantItem(
                 symbol=w.get('stockSymbol', ''),
                 underlying_symbol=w.get('underlyingSymbol', ''),
                 issuer_name=w.get('issuerName', ''),
@@ -680,7 +557,7 @@ class IboardClient:
         for u in raw_data.get('underlyingData', []):
             symbol = u.get('stockSymbol', '')
             if symbol:
-                underlying[symbol] = UnderlyingData(
+                underlying[symbol] = UnderlyingInfo(
                     symbol=symbol,
                     current_price=self._safe_float(u.get('matchedPrice')) or self._safe_float(u.get('refPrice')),
                     ref_price=self._safe_float(u.get('refPrice')),
@@ -790,6 +667,311 @@ class IboardClient:
                     'underlying_info': underlying_info,
                 }
         
+        return None
+    
+    # -------------------------------------------------------------------------
+    # Chart History API
+    # -------------------------------------------------------------------------
+    
+    async def get_chart_history(
+        self, 
+        symbol: str, 
+        resolution: str = "1",
+        from_ts: Optional[int] = None,
+        to_ts: Optional[int] = None,
+        days: Optional[int] = None  # If None, uses smart default based on resolution
+    ) -> Optional[Dict]:
+        """
+        Get price history (OHLCV) from SSI statistics API.
+        
+        Supports multiple resolutions for different use cases:
+        - "1"  : 1-minute bars (intraday, ~30 days available)
+        - "5"  : 5-minute bars (intraday, ~30 days available)
+        - "15" : 15-minute bars (intraday, ~30 days available)
+        - "30" : 30-minute bars (intraday, ~30 days available)
+        - "60" : 1-hour bars (intraday, ~30 days available)
+        - "1D" : Daily bars (full history)
+        
+        Smart defaults for 'days' based on resolution:
+        - 1-minute: 3 days (~450 points during trading hours)
+        - 5-minute: 5 days (~100 points)
+        - 15-minute: 7 days (~70 points)
+        - 30-minute: 14 days (~70 points)
+        - 1-hour: 14 days (~50 points)
+        - 1D: 30 days (~20 points)
+        
+        Args:
+            symbol: Stock or warrant symbol (e.g., "ACB", "CACB2331")
+            resolution: Timeframe ("1", "5", "15", "30", "60", "1D")
+            from_ts: Start Unix timestamp (optional)
+            to_ts: End Unix timestamp (optional, defaults to now)
+            days: Number of days to fetch (optional, uses smart default if None)
+            
+        Returns:
+            Dict with keys: t (timestamps), o, h, l, c, v
+            Or None if failed
+        """
+        import time
+        
+        # Smart default days based on resolution
+        default_days = {
+            "1": 3,     # 1-minute: 3 days (~450 points)
+            "5": 5,     # 5-minute: 5 days (~100 points)
+            "15": 7,    # 15-minute: 7 days (~70 points)
+            "30": 14,   # 30-minute: 14 days (~70 points)
+            "60": 14,   # 1-hour: 14 days (~50 points)
+            "1D": 30,   # Daily: 30 days (~20 points)
+        }
+        
+        if days is None:
+            days = default_days.get(resolution, 14)
+        
+        # Calculate default time range
+        now = int(time.time())
+        if to_ts is None:
+            to_ts = now
+        if from_ts is None:
+            from_ts = to_ts - (days * 24 * 60 * 60)
+        
+        cache_key = f"chart_history:{symbol}:{resolution}:{from_ts}:{to_ts}"
+        cached = await self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
+        # Use the statistics API endpoint (different base URL)
+        statistics_url = f"https://iboard-api.ssi.com.vn/statistics/charts/history"
+        params = {
+            "symbol": symbol.upper(),
+            "resolution": resolution,
+            "from": from_ts,
+            "to": to_ts
+        }
+        
+        try:
+            # Use a separate client for the statistics API (different domain)
+            async with httpx.AsyncClient(
+                timeout=self._timeout,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "application/json",
+                    "Origin": "https://iboard.ssi.com.vn",
+                    "Referer": "https://iboard.ssi.com.vn/",
+                }
+            ) as stats_client:
+                response = await stats_client.get(
+                    statistics_url,
+                    params=params,
+                )
+                response.raise_for_status()
+                json_response = response.json()
+                
+                # SSI returns nested structure: { "data": { "s": "ok", "t": [], ... } }
+                data = json_response.get("data", json_response)
+                
+                if data.get("s") == "ok":
+                    result = {
+                        "t": data.get("t", []),
+                        "o": data.get("o", []),
+                        "h": data.get("h", []),
+                        "l": data.get("l", []),
+                        "c": data.get("c", []),
+                        "v": data.get("v", []),
+                    }
+                    # Cache for 10 minutes
+                    await self._cache.set(cache_key, result, ttl_seconds=600)
+                    return result
+                else:
+                    logger.warning(f"No data for {symbol}: {data.get('s')}")
+                    return None
+                
+        except Exception as e:
+            logger.error(f"Error fetching chart history for {symbol}: {e}")
+            return None
+    
+    # -------------------------------------------------------------------------
+    # Company Statistics APIs
+    # -------------------------------------------------------------------------
+    
+    async def get_company_profile(self, symbol: str) -> Optional[Dict]:
+        """Get company profile information.
+        
+        Cache: 1 hour (static data, rarely changes)
+        """
+        cache_key = f"company_profile:{symbol.upper()}"
+        cached = await self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
+        url = "https://iboard-api.ssi.com.vn/statistics/company/ssmi/company-profile"
+        params = {"symbol": symbol.upper(), "language": "vn"}
+        
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout, headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json",
+                "Origin": "https://iboard.ssi.com.vn",
+            }) as client:
+                response = await client.get(url, params=params)
+                if response.status_code == 200:
+                    json_resp = response.json()
+                    if json_resp.get("code") == "SUCCESS":
+                        data = json_resp.get("data")
+                        await self._cache.set(cache_key, data, ttl_seconds=3600)  # 1 hour
+                        return data
+        except Exception as e:
+            logger.error(f"Error fetching company profile for {symbol}: {e}")
+        return None
+    
+    async def get_sub_companies(self, symbol: str) -> Optional[List[Dict]]:
+        """Get list of subsidiaries and affiliated companies.
+        
+        Cache: 1 hour
+        """
+        cache_key = f"sub_companies:{symbol.upper()}"
+        cached = await self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
+        url = "https://iboard-api.ssi.com.vn/statistics/company/ssmi/sub-companies"
+        params = {"symbol": symbol.upper(), "language": "vn", "page": 1, "pageSize": 1000}
+        
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout, headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json",
+                "Origin": "https://iboard.ssi.com.vn",
+            }) as client:
+                response = await client.get(url, params=params)
+                if response.status_code == 200:
+                    json_resp = response.json()
+                    if json_resp.get("code") == "SUCCESS":
+                        data = json_resp.get("data", [])
+                        await self._cache.set(cache_key, data, ttl_seconds=3600)
+                        return data
+        except Exception as e:
+            logger.error(f"Error fetching sub companies for {symbol}: {e}")
+        return None
+    
+    async def get_company_leadership(self, symbol: str) -> Optional[List[Dict]]:
+        """Get list of company leadership (board members, executives).
+        
+        Cache: 1 hour
+        """
+        cache_key = f"company_leadership:{symbol.upper()}"
+        cached = await self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
+        url = "https://iboard-api.ssi.com.vn/statistics/company/ssmi/company-leaderships"
+        params = {"symbol": symbol.upper(), "language": "vn", "page": 1, "pageSize": 100}
+        
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout, headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json",
+                "Origin": "https://iboard.ssi.com.vn",
+            }) as client:
+                response = await client.get(url, params=params)
+                if response.status_code == 200:
+                    json_resp = response.json()
+                    if json_resp.get("code") == "SUCCESS":
+                        data = json_resp.get("data", [])
+                        await self._cache.set(cache_key, data, ttl_seconds=3600)
+                        return data
+        except Exception as e:
+            logger.error(f"Error fetching company leadership for {symbol}: {e}")
+        return None
+    
+    async def get_shareholder_detail(self, symbol: str) -> Optional[List[Dict]]:
+        """Get detailed list of shareholders (individual and institutional).
+        
+        Cache: 30 minutes
+        """
+        cache_key = f"shareholder_detail:{symbol.upper()}"
+        cached = await self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
+        url = "https://iboard-api.ssi.com.vn/statistics/company/ssmi/share-holder-detail"
+        params = {"symbol": symbol.upper(), "language": "vn", "page": 1, "pageSize": 100}
+        
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout, headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json",
+                "Origin": "https://iboard.ssi.com.vn",
+            }) as client:
+                response = await client.get(url, params=params)
+                if response.status_code == 200:
+                    json_resp = response.json()
+                    if json_resp.get("code") == "SUCCESS":
+                        data = json_resp.get("data", [])
+                        await self._cache.set(cache_key, data, ttl_seconds=1800)  # 30 min
+                        return data
+        except Exception as e:
+            logger.error(f"Error fetching shareholder detail for {symbol}: {e}")
+        return None
+    
+    async def get_shareholder_summary(self, symbol: str) -> Optional[Dict]:
+        """Get shareholder structure summary (foreign/state/other percentages).
+        
+        Cache: 30 minutes
+        """
+        cache_key = f"shareholder_summary:{symbol.upper()}"
+        cached = await self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
+        url = "https://iboard-api.ssi.com.vn/statistics/company/ssmi/share-holder-summary"
+        params = {"symbol": symbol.upper(), "language": "vn"}
+        
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout, headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json",
+                "Origin": "https://iboard.ssi.com.vn",
+            }) as client:
+                response = await client.get(url, params=params)
+                if response.status_code == 200:
+                    json_resp = response.json()
+                    if json_resp.get("code") == "SUCCESS":
+                        data_list = json_resp.get("data", [])
+                        data = data_list[0] if data_list else None
+                        if data:
+                            await self._cache.set(cache_key, data, ttl_seconds=1800)
+                        return data
+        except Exception as e:
+            logger.error(f"Error fetching shareholder summary for {symbol}: {e}")
+        return None
+    
+    async def get_cap_and_dividend(self, symbol: str) -> Optional[Dict]:
+        """Get capital and dividend history.
+        
+        Cache: 1 hour
+        """
+        cache_key = f"cap_dividend:{symbol.upper()}"
+        cached = await self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
+        url = "https://iboard-api.ssi.com.vn/statistics/company/ssmi/cap-and-dividend"
+        params = {"symbol": symbol.upper()}
+        
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout, headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json",
+                "Origin": "https://iboard.ssi.com.vn",
+            }) as client:
+                response = await client.get(url, params=params)
+                if response.status_code == 200:
+                    json_resp = response.json()
+                    if json_resp.get("code") == "SUCCESS":
+                        data = json_resp.get("data")
+                        await self._cache.set(cache_key, data, ttl_seconds=3600)
+                        return data
+        except Exception as e:
+            logger.error(f"Error fetching cap and dividend for {symbol}: {e}")
         return None
     
     # -------------------------------------------------------------------------

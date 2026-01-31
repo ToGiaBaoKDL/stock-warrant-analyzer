@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { FeeSettings } from "@/stores/useWarrantStore";
-import { calculateProfitLoss, calculateBreakEven } from "@/utils/calculations";
+import { calculateProfitLoss, calculateStockBreakEven, calculateBreakEven } from "@/utils/calculations";
 import type {
     ScenarioRow,
     StockPosition,
@@ -11,7 +11,6 @@ import type {
     ScenarioCalculationsResult,
 } from "@/types";
 
-// Re-export types for convenience
 export type {
     ScenarioRow,
     StockPosition,
@@ -19,10 +18,6 @@ export type {
     ScenarioSummary,
     ScenarioCalculationsResult,
 };
-
-// ============================================
-// Calculation Functions (Pure)
-// ============================================
 
 function calculateScenarioRow(
     scenario: StockScenario,
@@ -39,15 +34,16 @@ function calculateScenarioRow(
         feeSettings.sellTaxPercent
     );
 
-    // Break-even for stocks (not warrants)
+    // Break-even for stocks
     let breakEvenPrice: number | undefined;
     if (!isWarrant) {
-        const principal = position.buyPrice * position.quantity;
-        const buyFee = (principal * feeSettings.buyFeePercent) / 100;
-        const sellFee = (scenario.sellPrice * position.quantity * feeSettings.sellFeePercent) / 100;
-        const sellTax = (scenario.sellPrice * position.quantity * feeSettings.sellTaxPercent) / 100;
-        const totalCosts = buyFee + sellFee + sellTax;
-        breakEvenPrice = position.quantity > 0 ? (principal + totalCosts) / position.quantity : 0;
+        breakEvenPrice = calculateStockBreakEven(
+            position.buyPrice,
+            position.quantity,
+            feeSettings.buyFeePercent,
+            feeSettings.sellFeePercent,
+            feeSettings.sellTaxPercent
+        );
     }
 
     return {

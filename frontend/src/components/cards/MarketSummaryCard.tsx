@@ -3,6 +3,7 @@
 import React from "react";
 import { Card, Typography, Tag } from "antd";
 import { formatVolume } from "@/utils";
+import { AppColors } from "@/utils/theme";
 
 const { Text } = Typography;
 
@@ -69,23 +70,23 @@ export const MarketSummaryCard = React.memo(function MarketSummaryCard({
                             {exchange}
                         </Text>
                     </div>
-                    <div className="text-lg font-semibold">{summary?.total_stocks || "..."} mã</div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">{summary?.total_stocks || "..."} mã</div>
                 </div>
                 <div className="text-right">
                     <div className="flex gap-2 text-xs">
-                        <span className="text-green-600">▲ {summary?.advances || 0}</span>
-                        <span className="text-yellow-600">- {summary?.unchanged || 0}</span>
-                        <span className="text-red-600">▼ {summary?.declines || 0}</span>
+                        <span style={{ color: AppColors.success }}>▲ {summary?.advances || 0}</span>
+                        <span style={{ color: AppColors.warning }}>- {summary?.unchanged || 0}</span>
+                        <span style={{ color: AppColors.error }}>▼ {summary?.declines || 0}</span>
                     </div>
                     <Text type="secondary" className="text-xs">
                         KL: {formatVolume(summary?.total_volume || 0)}
                     </Text>
                 </div>
             </div>
-
+            
             {/* Market Breadth Bar */}
-            {/* {total > 0 && (
-                <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-gray-100 mt-3">
+            {total > 0 && (
+                <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 mt-3">
                     <div
                         className="bg-green-500"
                         style={{ width: `${((summary?.advances || 0) / total) * 100}%` }}
@@ -99,14 +100,11 @@ export const MarketSummaryCard = React.memo(function MarketSummaryCard({
                         style={{ width: `${((summary?.declines || 0) / total) * 100}%` }}
                     />
                 </div>
-            )} */}
+            )}
+
         </Card>
     );
 });
-
-// ============================================
-// Grid Component
-// ============================================
 
 export interface MarketSummaryGridProps {
     /** Summary data for each exchange */
@@ -115,9 +113,6 @@ export interface MarketSummaryGridProps {
     exchanges?: string[];
 }
 
-/**
- * MarketSummaryGrid - Displays a grid of exchange summary cards
- */
 export const MarketSummaryGrid = React.memo(function MarketSummaryGrid({
     getSummary,
     exchanges = ["HOSE", "HNX", "UPCOM"],

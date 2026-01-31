@@ -9,8 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient, endpoints } from "@/lib/api-client";
 import { pollingIntervals } from "@/lib/query-client";
 import type { WarrantItem, WarrantListResponse } from "@/types/api";
-import { formatVND, formatVolume, getPriceColorClass, getRefetchInterval } from "@/utils";
-import { ExportButtons } from "@/components";
+import { formatVND, formatVolume, getPriceColorHex, getRefetchInterval } from "@/utils";
+import { AppColors } from "@/utils/theme";
+import { ExportButtons, SparklineCell } from "@/components";
 
 const { Text } = Typography;
 
@@ -53,7 +54,6 @@ const SORT_OPTIONS = [
 
 /**
  * WarrantTable - Displays warrant overview data
- * Extracted from app/page.tsx for reusability and maintainability
  */
 export const WarrantTable = React.memo(function WarrantTable({
     onViewScreener,
@@ -105,11 +105,11 @@ export const WarrantTable = React.memo(function WarrantTable({
             warrants = warrants.filter((w) => w.underlying_symbol === underlyingFilter);
         }
 
-        // Sort
-        if (sortField) {
+        // Sort - only sort numeric fields
+        if (sortField && ['volume', 'change_percent', 'days_to_maturity', 'current_price'].includes(sortField)) {
             warrants.sort((a, b) => {
-                const aVal = a[sortField as keyof WarrantItem] as number;
-                const bVal = b[sortField as keyof WarrantItem] as number;
+                const aVal = (a[sortField as keyof WarrantItem] as number) ?? 0;
+                const bVal = (b[sortField as keyof WarrantItem] as number) ?? 0;
                 return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
             });
         }
@@ -129,7 +129,8 @@ export const WarrantTable = React.memo(function WarrantTable({
                 render: (symbol: string, record: WarrantItem) => (
                     <Link
                         href={`/analysis/${symbol}`}
-                        className={`font-semibold ${getPriceColorClass(record.change)} hover:opacity-80`}
+                        className="font-semibold hover:opacity-80"
+                        style={{ color: getPriceColorHex(record.change_percent) }}
                     >
                         {symbol}
                     </Link>
@@ -141,7 +142,7 @@ export const WarrantTable = React.memo(function WarrantTable({
                 key: "underlying_symbol",
                 width: 80,
                 render: (symbol: string) => (
-                    <Link href={`/analysis/${symbol}`} className="text-blue-600 hover:underline">
+                    <Link href={`/analysis/${symbol}`} className="text-blue-600 dark:text-blue-400 hover:underline">
                         {symbol}
                     </Link>
                 ),
@@ -160,7 +161,7 @@ export const WarrantTable = React.memo(function WarrantTable({
                 width: 80,
                 align: "right" as const,
                 render: (price: number, record: WarrantItem) => (
-                    <span className={getPriceColorClass(record.change)}>{formatVND(price)}</span>
+                    <span style={{ color: getPriceColorHex(record.change_percent) }}>{formatVND(price)}</span>
                 ),
             },
             {
@@ -170,11 +171,29 @@ export const WarrantTable = React.memo(function WarrantTable({
                 width: 80,
                 align: "right" as const,
                 sorter: true,
-                render: (percent: number) => (
-                    <span className={getPriceColorClass(percent)}>
-                        {percent > 0 ? "+" : ""}
-                        {percent.toFixed(2)}%
-                    </span>
+                render: (percent: number, record: WarrantItem) => {
+                    const color = getPriceColorHex(percent);
+                    const absChange = record.change || 0;
+                    return (
+                        <div className="flex flex-col items-end leading-tight">
+                            <span style={{ color }}>
+                                {absChange >= 0 ? "+" : ""}{absChange.toLocaleString()}
+                            </span>
+                            <span style={{ color }} className="text-xs">
+                                {percent >= 0 ? "+" : ""}{percent.toFixed(2)}%
+                            </span>
+                        </div>
+                    );
+                },
+            },
+            {
+                title: "Trend",
+                dataIndex: "symbol",
+                key: "trend",
+                width: 90,
+                align: "center" as const,
+                render: (symbol: string, record: WarrantItem) => (
+                    <SparklineCell symbol={symbol} priceChange={record.change_percent} width={80} height={24} />
                 ),
             },
             {
@@ -216,7 +235,7 @@ export const WarrantTable = React.memo(function WarrantTable({
                 align: "right" as const,
                 sorter: true,
                 render: (days: number) => (
-                    <Tag color={days <= 30 ? "red" : days <= 60 ? "orange" : "green"}>
+                    <Tag color={days <= 30 ? "error" : days <= 60 ? "warning" : "success"}>
                         {days} ngày
                     </Tag>
                 ),
@@ -268,20 +287,11 @@ export const WarrantTable = React.memo(function WarrantTable({
             <div className="flex flex-wrap items-center gap-4">
                 <Input
                     placeholder="Tìm mã CW hoặc CP mẹ..."
-                    prefix={<SearchOutlined className="text-gray-400" />}
+                    prefix={<SearchOutlined className="text-gray-400 dark:text-gray-500" />}
                     value={search}
                     onChange={handleSearchChange}
                     style={{ width: 200 }}
                     allowClear
-                />
-                <Select
-                    placeholder="Lọc theo CP mẹ"
-                    style={{ width: 120 }}
-                    allowClear
-                    value={underlyingFilter}
-                    onChange={handleUnderlyingChange}
-                    options={underlyingOptions}
-                    showSearch
                 />
                 <Select
                     placeholder="Sắp xếp"
@@ -291,7 +301,11 @@ export const WarrantTable = React.memo(function WarrantTable({
                     onChange={handleSortChange}
                     options={SORT_OPTIONS}
                 />
-                <Button icon={<ReloadOutlined spin={isFetching} />} onClick={() => refetch()}>
+                <Button
+                    icon={<ReloadOutlined spin={isFetching} />}
+                    onClick={() => refetch()}
+                    style={{ color: AppColors.primary, borderColor: AppColors.primary }}
+                >
                     Làm mới
                 </Button>
                 <Button type="primary" onClick={handleViewScreener}>

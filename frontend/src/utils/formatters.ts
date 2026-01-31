@@ -63,23 +63,7 @@ export function formatDaysRemaining(days: number): string {
   return `${days} ngày`;
 }
 
-/**
- * Get color class based on profit/loss
- */
-export function getProfitColorClass(value: number): string {
-  if (value > 0) return "text-green-600";
-  if (value < 0) return "text-red-600";
-  return "text-gray-600";
-}
 
-/**
- * Get background color class based on break-even comparison
- */
-export function getBreakEvenColorClass(breakEven: number, targetPrice: number): string {
-  if (breakEven < targetPrice) return "bg-green-100";
-  if (breakEven > targetPrice) return "bg-red-100";
-  return "bg-gray-100";
-}
 
 /**
  * Truncate text with ellipsis

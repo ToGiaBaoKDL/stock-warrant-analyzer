@@ -68,7 +68,7 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
           <Result
             status="error"
             icon={<WarningOutlined className="text-red-500" />}
@@ -92,18 +92,18 @@ export class ErrorBoundary extends Component<Props, State> {
             ]}
           >
             {process.env.NODE_ENV === "development" && this.state.error && (
-              <div className="mt-4 p-4 bg-red-50 rounded-lg text-left max-w-lg mx-auto">
-                <Text strong className="text-red-700 block mb-2">Chi tiết lỗi (dev only):</Text>
+              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/30 rounded-lg text-left max-w-lg mx-auto">
+                <Text strong className="text-red-700 dark:text-red-300 block mb-2">Chi tiết lỗi (dev only):</Text>
                 <Paragraph
                   code
-                  className="text-xs text-red-600 overflow-auto max-h-32"
+                  className="text-xs text-red-600 dark:text-red-400 overflow-auto max-h-32"
                 >
                   {this.state.error.message}
                 </Paragraph>
                 {this.state.error.stack && (
                   <Paragraph
                     code
-                    className="text-xs text-red-500 overflow-auto max-h-40 mt-2"
+                    className="text-xs text-red-500 dark:text-red-400 overflow-auto max-h-40 mt-2"
                   >
                     {this.state.error.stack.slice(0, 500)}...
                   </Paragraph>

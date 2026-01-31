@@ -138,6 +138,22 @@ export const endpoints = {
       return `/market/warrant-expiring-soon${query.toString() ? '?' + query.toString() : ''}`;
     },
     exchangeSummary: () => `/market/exchange-summary`,
+    history: (symbol: string, params?: { resolution?: string; days?: number }) => {
+      const query = new URLSearchParams();
+      if (params?.resolution) query.append('resolution', params.resolution);
+      if (params?.days) query.append('days', params.days.toString());
+      return `/market/history/${symbol}${query.toString() ? '?' + query.toString() : ''}`;
+    },
+  },
+
+  // Company data
+  company: {
+    profile: (symbol: string) => `/company/${symbol}/profile`,
+    subsidiaries: (symbol: string) => `/company/${symbol}/subsidiaries`,
+    leadership: (symbol: string) => `/company/${symbol}/leadership`,
+    shareholders: (symbol: string) => `/company/${symbol}/shareholders`,
+    shareholderSummary: (symbol: string) => `/company/${symbol}/shareholder-summary`,
+    capDividend: (symbol: string) => `/company/${symbol}/cap-dividend`,
   },
 };
 

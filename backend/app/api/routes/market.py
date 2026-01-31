@@ -3,7 +3,7 @@ import asyncio
 Market Overview API Routes - Using iBoard API
 """
 
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 import logging
 
@@ -29,37 +29,47 @@ async def get_market_overview():
         underlying = warrants_data['underlying']
         
         # Stock statistics by exchange
-        exchange_stats = {}
-        for exchange in ["HOSE", "HNX", "UPCOM"]:
-            exchange_stocks = [s for s in all_stocks if s.exchange == exchange]
-            if exchange_stocks:
-                advances = sum(1 for s in exchange_stocks if s.change_percent > 0)
-                declines = sum(1 for s in exchange_stocks if s.change_percent < 0)
-                unchanged = sum(1 for s in exchange_stocks if s.change_percent == 0)
+        exchange_stats = {
+            "HOSE": {"total_stocks": 0, "total_volume": 0, "total_value": 0, "advances": 0, "declines": 0, "unchanged": 0},
+            "HNX": {"total_stocks": 0, "total_volume": 0, "total_value": 0, "advances": 0, "declines": 0, "unchanged": 0},
+            "UPCOM": {"total_stocks": 0, "total_volume": 0, "total_value": 0, "advances": 0, "declines": 0, "unchanged": 0},
+        }
+
+        # Single pass aggregation O(N)
+        for s in all_stocks:
+            if s.exchange in exchange_stats:
+                stats = exchange_stats[s.exchange]
+                stats["total_stocks"] += 1
+                stats["total_volume"] += s.volume
+                stats["total_value"] += s.value
                 
-                exchange_stats[exchange] = {
-                    "total_stocks": len(exchange_stocks),
-                    "total_volume": sum(s.volume for s in exchange_stocks),
-                    "total_value": sum(s.value for s in exchange_stocks),
-                    "advances": advances,
-                    "declines": declines,
-                    "unchanged": unchanged,
-                }
+                if s.change_percent > 0:
+                    stats["advances"] += 1
+                elif s.change_percent < 0:
+                    stats["declines"] += 1
+                else:
+                    stats["unchanged"] += 1
         
-        # Warrant statistics
-        warrant_advances = sum(1 for w in all_warrants if w.change_percent > 0)
-        warrant_declines = sum(1 for w in all_warrants if w.change_percent < 0)
-        warrant_unchanged = sum(1 for w in all_warrants if w.change_percent == 0)
-        
+        # Warrant statistics (already efficient enough, 140 warrants vs 1600 stocks)
         warrant_stats = {
             "total_warrants": len(all_warrants),
             "total_underlying": len(underlying),
-            "total_volume": sum(w.volume for w in all_warrants),
-            "total_value": sum(w.value for w in all_warrants),
-            "advances": warrant_advances,
-            "declines": warrant_declines,
-            "unchanged": warrant_unchanged,
+            "total_volume": 0,
+            "total_value": 0,
+            "advances": 0,
+            "declines": 0,
+            "unchanged": 0,
         }
+
+        for w in all_warrants:
+            warrant_stats["total_volume"] += w.volume
+            warrant_stats["total_value"] += w.value
+            if w.change_percent > 0:
+                warrant_stats["advances"] += 1
+            elif w.change_percent < 0:
+                warrant_stats["declines"] += 1
+            else:
+                warrant_stats["unchanged"] += 1
         
         return {
             "stocks": exchange_stats,
@@ -324,3 +334,49 @@ async def get_exchange_summary():
         ))
     
     return summaries
+
+
+@router.get("/history/{symbol}")
+async def get_chart_history(
+    symbol: str,
+    resolution: str = "1",  # Default: 1-minute for sparklines
+    days: Optional[int] = None,  # None = smart default based on resolution
+):
+    """
+    Get price history (OHLCV) for a stock or warrant.
+    
+    Supports multiple resolutions:
+    - "1"  : 1-minute bars (best for sparklines, ~3 days default)
+    - "5"  : 5-minute bars
+    - "15" : 15-minute bars
+    - "30" : 30-minute bars
+    - "60" : 1-hour bars
+    - "1D" : Daily bars (full history available)
+    
+    Args:
+        symbol: Stock or warrant symbol (e.g., ACB)
+        resolution: Timeframe (default "1" = 1-minute)
+        days: Number of days (optional, uses smart default if not provided)
+    
+    Returns:
+        { t: [], o: [], h: [], l: [], c: [], v: [] }
+    """
+    client = get_iboard_client()
+    
+    try:
+        data = await client.get_chart_history(
+            symbol=symbol,
+            resolution=resolution,
+            days=days
+        )
+        
+        if data is None:
+            raise HTTPException(status_code=404, detail=f"No history data for {symbol}")
+        
+        return data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching chart history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

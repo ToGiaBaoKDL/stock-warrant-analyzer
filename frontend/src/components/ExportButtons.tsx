@@ -5,6 +5,7 @@ import { Button, Dropdown, message, Tooltip } from "antd";
 import { DownloadOutlined, FileImageOutlined, FileExcelOutlined, LoadingOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { exportToCSV, exportToImage, ExportColumn } from "@/utils/exportUtils";
+import { AppColors } from "@/utils/theme";
 
 export interface ExportButtonsProps<T extends Record<string, unknown>> {
     /** Data to export */
@@ -25,11 +26,6 @@ export interface ExportButtonsProps<T extends Record<string, unknown>> {
 
 /**
  * Reusable Export Buttons component for tables
- * Best practices:
- * - Loading state during export
- * - Disabled when no data
- * - Tooltip for guidance
- * - Error handling with user feedback
  */
 export function ExportButtons<T extends Record<string, unknown>>({
     data,
@@ -106,6 +102,7 @@ export function ExportButtons<T extends Record<string, unknown>>({
                         size={size}
                         onClick={handleExportCSV}
                         disabled={isDisabled || isExporting}
+                        style={{ color: AppColors.primary, borderColor: AppColors.primary }}
                     >
                         CSV
                     </Button>
@@ -117,6 +114,7 @@ export function ExportButtons<T extends Record<string, unknown>>({
                             size={size}
                             onClick={handleExportImage}
                             disabled={isExporting}
+                            style={{ color: AppColors.primary, borderColor: AppColors.primary }}
                         >
                             Ảnh
                         </Button>
@@ -137,6 +135,7 @@ export function ExportButtons<T extends Record<string, unknown>>({
                     icon={isExporting ? <LoadingOutlined /> : <DownloadOutlined />}
                     size={size}
                     disabled={isDisabled}
+                    style={{ color: AppColors.primary, borderColor: AppColors.primary }}
                 >
                     Xuất
                 </Button>

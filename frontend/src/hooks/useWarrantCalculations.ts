@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import type { WarrantItem } from "@/types/api";
 import type { FeeSettings } from "@/stores/useWarrantStore";
-import { calculateBreakEven } from "@/utils/calculations";
+import { calculateBreakEven, calculateCost, calculateRevenue } from "@/utils/calculations";
 
 // ============================================
 // Types
@@ -77,18 +77,19 @@ function calculateWarrantMetrics(
     const estimatedSellPrice = Math.max(0, targetIntrinsicValue + currentTimeValue * timeValueFactor);
 
     // Cost calculation
-    const principal = warrant.current_price * quantity;
-    const buyFee = (principal * feeSettings.buyFeePercent) / 100;
-    const totalCost = principal + buyFee;
+    const cost = calculateCost(warrant.current_price, quantity, feeSettings.buyFeePercent);
+    const totalCost = cost.totalCost;
 
     // Revenue calculation
-    const grossRevenue = estimatedSellPrice * quantity;
-    const sellFee = (grossRevenue * feeSettings.sellFeePercent) / 100;
-    const sellTax = (grossRevenue * feeSettings.sellTaxPercent) / 100;
-    const netRevenue = grossRevenue - sellFee - sellTax;
+    const revenue = calculateRevenue(
+        estimatedSellPrice,
+        quantity,
+        feeSettings.sellFeePercent,
+        feeSettings.sellTaxPercent
+    );
 
     // Profit calculation
-    const estimatedProfit = netRevenue - totalCost;
+    const estimatedProfit = revenue.netRevenue - totalCost;
     const estimatedProfitPercent = totalCost > 0 ? (estimatedProfit / totalCost) * 100 : 0;
 
     // Leverage calculation
@@ -106,7 +107,7 @@ function calculateWarrantMetrics(
         estimatedProfit,
         estimatedProfitPercent,
         totalCost,
-        netRevenue,
+        netRevenue: revenue.netRevenue,
         leverage,
     };
 }

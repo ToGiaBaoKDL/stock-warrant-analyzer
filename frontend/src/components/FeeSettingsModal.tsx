@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Modal, Form, InputNumber, Button, Typography, Space, Tooltip } from "antd";
 import { SettingOutlined, SaveOutlined, InfoCircleOutlined, DollarOutlined } from "@ant-design/icons";
 import { useWarrantStore } from "@/stores/useWarrantStore";
+import { AppColors } from "@/utils/theme";
 
 const { Text } = Typography;
 
@@ -78,10 +79,10 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
             }}
         >
             {/* Header with Brand Color - Fixed overlap with close button */}
-            <div className="bg-gradient-to-r from-[#CC785C] to-[#a85d45] px-5 py-4 relative">
+            <div className="px-5 py-4 relative" style={{ background: "var(--gradient-primary-horizontal)" }}>
                 <div className="flex items-center gap-3 pr-8">
                     <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <DollarOutlined className="text-[#CC785C] text-xl" />
+                        <DollarOutlined className="text-xl" style={{ color: AppColors.primary }} />
                     </div>
                     <div>
                         <Text className="!text-white font-bold text-base block">Phí giao dịch</Text>
@@ -114,7 +115,7 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
                     <div className="grid grid-cols-3 gap-3">
                         <Form.Item
                             name="buyFeePercent"
-                            label={<Text className="text-gray-600 font-medium text-xs">Phí mua</Text>}
+                            label={<Text className="text-gray-600 dark:text-gray-300 font-medium text-xs">Phí mua</Text>}
                             className="mb-3"
                         >
                             <InputNumber
@@ -129,7 +130,7 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
 
                         <Form.Item
                             name="sellFeePercent"
-                            label={<Text className="text-gray-600 font-medium text-xs">Phí bán</Text>}
+                            label={<Text className="text-gray-600 dark:text-gray-300 font-medium text-xs">Phí bán</Text>}
                             className="mb-3"
                         >
                             <InputNumber
@@ -146,7 +147,7 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
                             name="sellTaxPercent"
                             label={
                                 <div className="flex items-center gap-1">
-                                    <Text className="text-gray-600 font-medium text-xs">Thuế TNCN</Text>
+                                    <Text className="text-gray-600 dark:text-gray-300 font-medium text-xs">Thuế TNCN</Text>
                                     <Tooltip title="Cố định 0.1%">
                                         <InfoCircleOutlined className="text-gray-400 text-xs" />
                                     </Tooltip>
@@ -175,10 +176,10 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
                             { name: "TCBS", fee: "0.15%" },
                             { name: "Mirae", fee: "0.10%" },
                         ].map((broker) => (
-                            <div key={broker.name} className="text-xs bg-gray-50 px-2 py-2 rounded-lg text-center border border-gray-100">
-                                <span className="text-gray-500">{broker.name}</span>
+                            <div key={broker.name} className="text-xs bg-gray-50 dark:bg-gray-700 px-2 py-2 rounded-lg text-center border border-gray-100 dark:border-gray-600">
+                                <span className="text-gray-500 dark:text-gray-400">{broker.name}</span>
                                 <br />
-                                <span className="text-[#CC785C] font-semibold">{broker.fee}</span>
+                                <span className="font-semibold" style={{ color: AppColors.primary }}>{broker.fee}</span>
                             </div>
                         ))}
                     </div>
@@ -192,7 +193,7 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
                             type="primary"
                             icon={<SaveOutlined />}
                             onClick={handleSave}
-                            className="flex-[2] !bg-[#CC785C] !border-[#CC785C] hover:!bg-[#b5654a] hover:!border-[#b5654a]"
+                            className="flex-[2] transition-colors"
                             size="large"
                         >
                             {hasChanges ? "Lưu thay đổi" : "Đóng"}

@@ -1,9 +1,11 @@
 // Components exports
-export { ErrorBoundary } from './ErrorBoundary';
-export { ExportButtons } from './ExportButtons';
-
-export { MainNav } from './MainNav';
-export { FeeSettingsModal, FeeSettingsButton } from './FeeSettingsModal';
+export * from "./ErrorBoundary";
+export * from "./ErrorBoundary";
+export * from "./ExportButtons";
+export * from "./MainNav";
+export * from "./FeeSettingsModal";
+export * from "./ThemeProvider";
+export * from "./ThemeSwitcher";
 export {
   PriceCardSkeleton,
   StockDetailSkeleton,
@@ -14,10 +16,13 @@ export {
 } from './LoadingSkeletons';
 
 // Common components
-export { PriceDisplay, PercentChange, ProfitDisplay } from './common/PriceDisplay';
+export * from './common';
 
 // Table components
 export * from './tables';
 
 // Card components
 export * from './cards';
+
+// Providers
+export { QueryProvider } from './providers/QueryProvider';

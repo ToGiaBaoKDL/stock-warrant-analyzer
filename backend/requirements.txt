@@ -14,8 +14,3 @@ httpx>=0.26.0
 
 # Environment
 python-dotenv>=1.0.0
-
-# Note: Removed vnstock, ssi-fc-data, redis (no longer needed)
-# - iBoard API doesn't require authentication
-# - No rate limit, so no caching needed
-# - Real-time data fetched directly from SSI iBoard

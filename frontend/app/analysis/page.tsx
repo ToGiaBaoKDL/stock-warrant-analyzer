@@ -24,7 +24,7 @@ export default function AnalysisLandingPage() {
   // While checking persistence
   if (isRedirecting && currentSymbol) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F4EF]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
         <Spin size="large" />
       </div>
     );
