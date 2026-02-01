@@ -171,6 +171,51 @@ class IboardClient:
         except (ValueError, TypeError):
             return default
     
+    def _parse_stock_data(self, s: dict, default_exchange: str = "") -> StockItem:
+        """Parse raw API response dict into StockItem. Shared by stock and VN30 fetchers."""
+        return StockItem(
+            symbol=s.get('stockSymbol', ''),
+            name=s.get('companyNameVi', '') or s.get('clientName', ''),
+            name_en=s.get('companyNameEn', '') or s.get('clientNameEn', ''),
+            exchange=s.get('exchange', default_exchange).upper(),
+            board_id=s.get('boardId', 'MAIN'),
+            
+            current_price=self._safe_float(s.get('matchedPrice')) or self._safe_float(s.get('refPrice')),
+            ref_price=self._safe_float(s.get('refPrice')),
+            ceiling=self._safe_float(s.get('ceiling')),
+            floor=self._safe_float(s.get('floor')),
+            open_price=self._safe_float(s.get('openPrice')),
+            high_price=self._safe_float(s.get('highest')),
+            low_price=self._safe_float(s.get('lowest')),
+            avg_price=self._safe_float(s.get('avgPrice')),
+            
+            change=self._safe_float(s.get('priceChange')),
+            change_percent=self._safe_float(s.get('priceChangePercent')),
+            
+            volume=self._safe_int(s.get('nmTotalTradedQty')),
+            value=self._safe_float(s.get('nmTotalTradedValue')),
+            
+            bid1_price=self._safe_float(s.get('best1Bid')),
+            bid1_vol=self._safe_int(s.get('best1BidVol')),
+            bid2_price=self._safe_float(s.get('best2Bid')),
+            bid2_vol=self._safe_int(s.get('best2BidVol')),
+            bid3_price=self._safe_float(s.get('best3Bid')),
+            bid3_vol=self._safe_int(s.get('best3BidVol')),
+            ask1_price=self._safe_float(s.get('best1Offer')),
+            ask1_vol=self._safe_int(s.get('best1OfferVol')),
+            ask2_price=self._safe_float(s.get('best2Offer')),
+            ask2_vol=self._safe_int(s.get('best2OfferVol')),
+            ask3_price=self._safe_float(s.get('best3Offer')),
+            ask3_vol=self._safe_int(s.get('best3OfferVol')),
+            
+            foreign_buy_vol=self._safe_int(s.get('buyForeignQtty')),
+            foreign_sell_vol=self._safe_int(s.get('sellForeignQtty')),
+            foreign_remain=self._safe_int(s.get('remainForeignQtty')),
+            
+            session=s.get('session', ''),
+            trading_date=self._parse_date_yyyymmdd(s.get('tradingDate', '')),
+        )
+    
     # -------------------------------------------------------------------------
     # Stock APIs
     # -------------------------------------------------------------------------
@@ -227,53 +272,8 @@ class IboardClient:
             logger.error(f"iBoard API error: {data.get('message')}")
             raise Exception(f"iBoard API error: {data.get('message')}")
         
-        stocks = []
         start_time = time.time()
-        
-        for s in data.get('data', []):
-            stock = StockItem(
-                symbol=s.get('stockSymbol', ''),
-                name=s.get('companyNameVi', '') or s.get('clientName', ''),
-                name_en=s.get('companyNameEn', '') or s.get('clientNameEn', ''),
-                exchange=s.get('exchange', exchange).upper(),
-                board_id=s.get('boardId', 'MAIN'),
-                
-                current_price=self._safe_float(s.get('matchedPrice')) or self._safe_float(s.get('refPrice')),
-                ref_price=self._safe_float(s.get('refPrice')),
-                ceiling=self._safe_float(s.get('ceiling')),
-                floor=self._safe_float(s.get('floor')),
-                open_price=self._safe_float(s.get('openPrice')),
-                high_price=self._safe_float(s.get('highest')),
-                low_price=self._safe_float(s.get('lowest')),
-                avg_price=self._safe_float(s.get('avgPrice')),
-                
-                change=self._safe_float(s.get('priceChange')),
-                change_percent=self._safe_float(s.get('priceChangePercent')),
-                
-                volume=self._safe_int(s.get('nmTotalTradedQty')),
-                value=self._safe_float(s.get('nmTotalTradedValue')),
-                
-                bid1_price=self._safe_float(s.get('best1Bid')),
-                bid1_vol=self._safe_int(s.get('best1BidVol')),
-                bid2_price=self._safe_float(s.get('best2Bid')),
-                bid2_vol=self._safe_int(s.get('best2BidVol')),
-                bid3_price=self._safe_float(s.get('best3Bid')),
-                bid3_vol=self._safe_int(s.get('best3BidVol')),
-                ask1_price=self._safe_float(s.get('best1Offer')),
-                ask1_vol=self._safe_int(s.get('best1OfferVol')),
-                ask2_price=self._safe_float(s.get('best2Offer')),
-                ask2_vol=self._safe_int(s.get('best2OfferVol')),
-                ask3_price=self._safe_float(s.get('best3Offer')),
-                ask3_vol=self._safe_int(s.get('best3OfferVol')),
-                
-                foreign_buy_vol=self._safe_int(s.get('buyForeignQtty')),
-                foreign_sell_vol=self._safe_int(s.get('sellForeignQtty')),
-                foreign_remain=self._safe_int(s.get('remainForeignQtty')),
-                
-                session=s.get('session', ''),
-                trading_date=self._parse_date_yyyymmdd(s.get('tradingDate', '')),
-            )
-            stocks.append(stock)
+        stocks = [self._parse_stock_data(s, exchange) for s in data.get('data', [])]
         
         elapsed = (time.time() - start_time) * 1000
         logger.info(f"[API] Fetched {len(stocks)} stocks from {exchange.upper()} in {elapsed:.0f}ms")
@@ -386,53 +386,9 @@ class IboardClient:
             logger.error(f"iBoard API error: {data.get('message')}")
             raise Exception(f"iBoard API error: {data.get('message')}")
         
-        stocks = []
         start_time = time.time()
-        
-        for s in data.get('data', []):
-            stock = StockItem(
-                symbol=s.get('stockSymbol', ''),
-                name=s.get('companyNameVi', '') or s.get('clientName', ''),
-                name_en=s.get('companyNameEn', '') or s.get('clientNameEn', ''),
-                exchange='HOSE',  # VN30 stocks are all from HOSE
-                board_id=s.get('boardId', 'MAIN'),
-                
-                current_price=self._safe_float(s.get('matchedPrice')) or self._safe_float(s.get('refPrice')),
-                ref_price=self._safe_float(s.get('refPrice')),
-                ceiling=self._safe_float(s.get('ceiling')),
-                floor=self._safe_float(s.get('floor')),
-                open_price=self._safe_float(s.get('openPrice')),
-                high_price=self._safe_float(s.get('highest')),
-                low_price=self._safe_float(s.get('lowest')),
-                avg_price=self._safe_float(s.get('avgPrice')),
-                
-                change=self._safe_float(s.get('priceChange')),
-                change_percent=self._safe_float(s.get('priceChangePercent')),
-                
-                volume=self._safe_int(s.get('nmTotalTradedQty')),
-                value=self._safe_float(s.get('nmTotalTradedValue')),
-                
-                bid1_price=self._safe_float(s.get('best1Bid')),
-                bid1_vol=self._safe_int(s.get('best1BidVol')),
-                bid2_price=self._safe_float(s.get('best2Bid')),
-                bid2_vol=self._safe_int(s.get('best2BidVol')),
-                bid3_price=self._safe_float(s.get('best3Bid')),
-                bid3_vol=self._safe_int(s.get('best3BidVol')),
-                ask1_price=self._safe_float(s.get('best1Offer')),
-                ask1_vol=self._safe_int(s.get('best1OfferVol')),
-                ask2_price=self._safe_float(s.get('best2Offer')),
-                ask2_vol=self._safe_int(s.get('best2OfferVol')),
-                ask3_price=self._safe_float(s.get('best3Offer')),
-                ask3_vol=self._safe_int(s.get('best3OfferVol')),
-                
-                foreign_buy_vol=self._safe_int(s.get('buyForeignQtty')),
-                foreign_sell_vol=self._safe_int(s.get('sellForeignQtty')),
-                foreign_remain=self._safe_int(s.get('remainForeignQtty')),
-                
-                session=s.get('session', ''),
-                trading_date=self._parse_date_yyyymmdd(s.get('tradingDate', '')),
-            )
-            stocks.append(stock)
+        # VN30 stocks are all from HOSE
+        stocks = [self._parse_stock_data(s, 'HOSE') for s in data.get('data', [])]
         
         elapsed = (time.time() - start_time) * 1000
         logger.info(f"[API] Fetched {len(stocks)} VN30 stocks in {elapsed:.0f}ms")

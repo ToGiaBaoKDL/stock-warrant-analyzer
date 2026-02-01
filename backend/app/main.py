@@ -8,6 +8,7 @@ Data Source: SSI iBoard Query API (no auth required)
 """
 
 from contextlib import asynccontextmanager
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -15,26 +16,28 @@ from app.core.config import get_settings
 from app.api.routes import market, warrants, stocks, company
 from app.services.iboard_client import get_iboard_client, close_iboard_client
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     # Startup
     settings = get_settings()
-    print(f"🚀 Starting Stock Warrant Analyzer API")
-    print(f"🌐 CORS allowed: {settings.frontend_url}")
-    print(f"📡 Data source: SSI iBoard Query API")
+    logger.info("🚀 Starting Stock Warrant Analyzer API")
+    logger.info(f"🌐 CORS allowed: {settings.frontend_url}")
+    logger.info("📡 Data source: SSI iBoard Query API")
     
     # Initialize iBoard client
     client = get_iboard_client()
-    print(f"✅ iBoard client initialized")
+    logger.info("✅ iBoard client initialized")
     
     yield
     
     # Shutdown
-    print("🛑 Shutting down...")
+    logger.info("🛑 Shutting down...")
     await close_iboard_client()
-    print("✅ iBoard client closed")
+    logger.info("✅ iBoard client closed")
 
 
 # Initialize FastAPI app
@@ -112,7 +115,7 @@ async def health_check():
         stocks = await client.get_stocks("hose")
         api_ok = len(stocks) > 0
     except Exception as e:
-        print(f"Health check API error: {e}")
+        logger.warning(f"Health check API error: {e}")
     
     return {
         "status": "healthy" if api_ok else "degraded",

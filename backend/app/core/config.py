@@ -11,15 +11,6 @@ class Settings(BaseSettings):
     PublicKey: str = ""  # RSA Public Key for SSI API
     PrivateKey: str = ""  # RSA Private Key for SSI API
     
-    # Redis Configuration
-    redis_host: str = "localhost"
-    redis_port: int = 6379
-    redis_db: int = 0
-    
-    # Cache TTL (seconds)
-    cache_ttl_market_data: int = 10
-    cache_ttl_warrant_data: int = 30
-    
     # CORS
     frontend_url: str = "http://localhost:3000"
     

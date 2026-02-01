@@ -66,6 +66,20 @@ class WarrantItem(BaseModel):
         """Alias for exercise_ratio for backward compatibility"""
         return self.exercise_ratio
     
+    @computed_field
+    @property
+    def break_even(self) -> float:
+        """Break-even price = (CW Price × Ratio) + Exercise Price"""
+        if self.exercise_ratio > 0:
+            return (self.current_price * self.exercise_ratio) + self.exercise_price
+        return 0.0
+    
+    @computed_field
+    @property
+    def issuer(self) -> str:
+        """Alias for issuer_name for backward compatibility"""
+        return self.issuer_name
+    
     class Config:
         from_attributes = True
 

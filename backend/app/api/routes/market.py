@@ -1,8 +1,8 @@
-import asyncio
 """
 Market Overview API Routes - Using iBoard API
 """
 
+import asyncio
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 import logging

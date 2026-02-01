@@ -59,7 +59,20 @@ async def get_all_warrants(
             data = await client.get_all_warrants()
         
         warrants = list(data['warrants'])
-        underlying_list = list(data['underlying'].values())
+        underlying_dict_data = data['underlying']  # Dict[symbol, UnderlyingInfo]
+        underlying_list = list(underlying_dict_data.values())
+        
+        # Helper to get underlying price for leverage calculation
+        def get_underlying_price(w: WarrantItem) -> float:
+            u = underlying_dict_data.get(w.underlying_symbol)
+            return u.current_price if u else 0.0
+        
+        # Helper to calculate leverage
+        def calc_leverage(w: WarrantItem) -> float:
+            u_price = get_underlying_price(w)
+            if w.current_price > 0 and w.exercise_ratio > 0:
+                return u_price / (w.current_price * w.exercise_ratio)
+            return 0.0
         
         # Apply filters
         if underlying:
@@ -68,7 +81,7 @@ async def get_all_warrants(
         
         if issuer:
             issuer_upper = issuer.upper()
-            warrants = [w for w in warrants if issuer_upper in w.issuer.upper()]
+            warrants = [w for w in warrants if issuer_upper in w.issuer_name.upper()]
         
         if search:
             search_upper = search.upper()
@@ -100,7 +113,7 @@ async def get_all_warrants(
             elif sort_by == "break_even":
                 warrants.sort(key=lambda x: x.break_even, reverse=reverse)
             elif sort_by == "leverage":
-                warrants.sort(key=lambda x: x.leverage or 0, reverse=reverse)
+                warrants.sort(key=calc_leverage, reverse=reverse)
         
         # Calculate total BEFORE applying limit
         total_count = len(warrants)
@@ -154,6 +167,13 @@ async def get_warrants_by_underlying(
         data = await client.get_warrants_by_underlying(symbol.upper())
         warrants_data = data['warrants']
         underlying_info = data.get('underlying_info')
+        underlying_price = underlying_info.current_price if underlying_info else 0.0
+        
+        # Helper to calculate leverage
+        def calc_leverage(w: WarrantItem) -> float:
+            if w.current_price > 0 and w.exercise_ratio > 0:
+                return underlying_price / (w.current_price * w.exercise_ratio)
+            return 0.0
         
         # iboard_client returns WarrantItem directly - use as-is
         warrants = list(warrants_data) if warrants_data else []
@@ -170,7 +190,7 @@ async def get_warrants_by_underlying(
             elif sort_by == "break_even":
                 warrants.sort(key=lambda x: x.break_even, reverse=reverse)
             elif sort_by == "leverage":
-                warrants.sort(key=lambda x: x.leverage or 0, reverse=reverse)
+                warrants.sort(key=calc_leverage, reverse=reverse)
         
         return WarrantsByUnderlyingResponse(
             underlying=underlying_info,
