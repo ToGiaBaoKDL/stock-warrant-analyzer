@@ -823,7 +823,7 @@ export default function AnalysisPage() {
                       dataSource={scenarioResults}
                       rowKey="id"
                       pagination={false}
-                      rowClassName={(record) => "hover:bg-gray-50 dark:hover:bg-[#2d2d2d] transition-colors"}
+                      rowClassName={(record) => "hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors"}
                       size="middle"
                       scroll={{ x: 800, y: 350 }}
                     />
@@ -879,29 +879,6 @@ export default function AnalysisPage() {
               }
             ]}
           />
-
-          {/* Link to Warrant Screener (for stocks) */}
-          {!isWarrant && (
-            <Card className="border-0 shadow-card bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center">
-                    <FireOutlined className="text-xl" style={{ color: "var(--primary-500)" }} />
-                  </div>
-                  <div>
-                    <Text strong className="text-lg">Chứng quyền {symbolCode}</Text>
-                    <br />
-                    <Text type="secondary">So sánh và chọn chứng quyền tốt nhất cho {symbolCode}</Text>
-                  </div>
-                </div>
-                <Link href={`/warrants?underlying=${symbolCode}`}>
-                  <Button type="primary" icon={<RightOutlined />} size="large" className="shadow-md">
-                    Warrant Screener
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          )}
         </div>
       </Content>
     </Layout>

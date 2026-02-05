@@ -31,10 +31,18 @@ export function getPricePosition(
     ceilingPrice?: number,
     floorPrice?: number
 ): PricePosition {
-    if (ceilingPrice && currentPrice >= ceilingPrice) return "ceiling";
-    if (floorPrice && currentPrice <= floorPrice) return "floor";
-    if (currentPrice > refPrice) return "up";
-    if (currentPrice < refPrice) return "down";
+    // Validate inputs - use fallback if ref is invalid
+    const safeRef = refPrice > 0 ? refPrice : currentPrice;
+    const safeCeiling = ceilingPrice && ceilingPrice > 0 ? ceilingPrice : undefined;
+    const safeFloor = floorPrice && floorPrice > 0 ? floorPrice : undefined;
+    
+    // Check ceiling/floor first
+    if (safeCeiling && currentPrice >= safeCeiling) return "ceiling";
+    if (safeFloor && currentPrice <= safeFloor) return "floor";
+    
+    // Then check relative to reference
+    if (currentPrice > safeRef) return "up";
+    if (currentPrice < safeRef) return "down";
     return "ref";
 }
 

@@ -26,5 +26,8 @@ export * from './cards';
 // Warrant components
 export * from './warrants';
 
+// Signal components
+export * from './signals';
+
 // Providers
 export { QueryProvider } from './providers/QueryProvider';

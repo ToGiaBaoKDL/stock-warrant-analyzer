@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   Select,
   InputNumber,
@@ -50,7 +51,7 @@ interface WarrantFiltersProps {
   showFilters: boolean;
 }
 
-export function WarrantFilters({
+export const WarrantFilters = React.memo(function WarrantFilters({
   selectedUnderlying,
   setSelectedUnderlying,
   underlyingOptions,
@@ -204,4 +205,4 @@ export function WarrantFilters({
       </div>
     </div>
   );
-}
+});

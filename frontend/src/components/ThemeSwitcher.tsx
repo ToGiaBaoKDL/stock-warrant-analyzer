@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Button, Tooltip } from "antd";
+import { Switch, Tooltip } from "antd";
 import { SunOutlined, MoonOutlined } from "@ant-design/icons";
 
 export function ThemeSwitcher() {
@@ -16,7 +16,7 @@ export function ThemeSwitcher() {
 
     if (!mounted) {
         return (
-            <div className="w-8 h-8" /> // Placeholder to avoid layout shift
+            <div className="w-10 h-5" /> // Placeholder to avoid layout shift
         );
     }
 
@@ -24,19 +24,19 @@ export function ThemeSwitcher() {
     const isDark = resolvedTheme === 'dark';
 
     // Toggle logic - always toggle between explicit light/dark
-    const toggleTheme = () => {
-        setTheme(isDark ? 'light' : 'dark');
+    const toggleTheme = (checked: boolean) => {
+        setTheme(checked ? 'dark' : 'light');
     };
 
     return (
-        <Tooltip title={isDark ? "Chuyển sang Giao diện sáng" : "Chuyển sang Giao diện tối"}>
-            <Button
-                type="text"
-                shape="circle"
+        <Tooltip title={isDark ? "Giao diện tối" : "Giao diện sáng"}>
+            <Switch
+                checked={isDark}
+                onChange={toggleTheme}
+                checkedChildren={<MoonOutlined />}
+                unCheckedChildren={<SunOutlined />}
                 aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-                icon={isDark ? <SunOutlined className="!text-yellow-400" /> : <MoonOutlined className="!text-gray-200" />}
-                onClick={toggleTheme}
-                className="flex items-center justify-center border-0 bg-white/10 hover:bg-white/20"
+                className="bg-gray-400"
             />
         </Tooltip>
     );

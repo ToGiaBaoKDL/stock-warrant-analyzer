@@ -1,10 +1,10 @@
 import { QueryClient } from "@tanstack/react-query";
 
-// Default stale time for queries (10 seconds for near real-time data)
-const DEFAULT_STALE_TIME = 10 * 1000;
+// Default stale time for queries (30 seconds for better caching)
+const DEFAULT_STALE_TIME = 30 * 1000;
 
-// Default cache time (5 minutes)
-const DEFAULT_GC_TIME = 5 * 60 * 1000;
+// Default cache time (10 minutes - increased for better performance)
+const DEFAULT_GC_TIME = 10 * 60 * 1000;
 
 // Create and configure QueryClient
 export function createQueryClient(): QueryClient {
@@ -21,11 +21,11 @@ export function createQueryClient(): QueryClient {
         retry: 3,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
         
-        // Refetch on window focus for real-time data
-        refetchOnWindowFocus: true,
+        // Refetch on window focus only for critical real-time data
+        refetchOnWindowFocus: false,
         
-        // Don't refetch on reconnect by default
-        refetchOnReconnect: true,
+        // Don't refetch on reconnect by default (will be enabled per-query if needed)
+        refetchOnReconnect: false,
         
         // Enable refetching in background
         refetchOnMount: true,
@@ -62,14 +62,14 @@ export const queryKeys = {
   },
 };
 
-// Polling intervals (in milliseconds)
+// Polling intervals (in milliseconds) - Optimized for performance
 export const pollingIntervals = {
-  // Real-time market data: 10 seconds
-  marketData: 10 * 1000,
+  // Market data: 30 seconds (reduced from 10s for better performance)
+  marketData: 30 * 1000,
   
-  // Warrant data: 30 seconds
-  warrantData: 30 * 1000,
+  // Warrant data: 1 minute (reduced from 30s)
+  warrantData: 60 * 1000,
   
-  // Stock list: 5 minutes (rarely changes)
-  stockList: 5 * 60 * 1000,
+  // Stock list: 10 minutes (rarely changes)
+  stockList: 10 * 60 * 1000,
 };

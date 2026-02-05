@@ -70,7 +70,7 @@ export const MarketSummaryCard = React.memo(function MarketSummaryCard({
                             {exchange}
                         </Text>
                     </div>
-                    <div className="text-lg font-semibold text-gray-900 dark:text-white">{summary?.total_stocks || "..."} mã</div>
+                    <div className="text-lg font-semibold !text-gray-900 dark:!text-white">{summary?.total_stocks || "..."} mã</div>
                 </div>
                 <div className="text-right">
                     <div className="flex gap-2 text-xs">

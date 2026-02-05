@@ -79,24 +79,19 @@
   --foreground: #e5e7eb;
   /* gray-200 */
   --card-bg: #1f1f1f;
-  --card-border: #374151;
+  --border: #374151;
   /* gray-700 */
 
   --table-header-bg: #2a2a2a;
   /* Slightly elevated */
-  --row-hover-bg: #2a2a2a;
+  --table-row-hover: #2a2a2a;
+  --muted: #9ca3af;
+  --subtle: #6b7280;
 
-  /* Semantics - Brighter for dark mode visibility */
-  --profit-bg: rgba(74, 222, 128, 0.1);
-  --loss-bg: rgba(248, 113, 113, 0.1);
-
-  /* Container overrides */
-  --bg-primary-50: #2a2a2a;
-  /* was white/light in light mode, dark gray in dark */
-  --bg-green-50: rgba(74, 222, 128, 0.1);
-  --bg-red-50: rgba(248, 113, 113, 0.1);
-  --text-primary: #e5e7eb;
-  --text-secondary: #9ca3af;
+  /* Scrollbar - dark mode */
+  --scrollbar-track: #1f1f1f;
+  --scrollbar-thumb: #4b5563;
+  --scrollbar-thumb-hover: #6b7280;
 
   /* Financial Semantics - Adjusted for dark contrast (Brighter/Pastel) */
   --color-ceiling: #e879f9;
@@ -134,9 +129,8 @@
   --alert-info-border: rgba(59, 130, 246, 0.3);
 }
 
-/* Dark Theme Variables (Placeholder for future activation) */
-/* .dark { ... } will be populated in Phase 2 */
-
+/* Tailwind CSS v4 Theme Configuration */
+/* stylelint-disable-next-line at-rule-no-unknown */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -192,7 +186,7 @@ html {
 
 /* Fix white hover on dark rows */
 .dark .ant-table-tbody>tr:hover>td {
-  background: #2d2d2d !important;
+  background: #2a2a2a !important;
 }
 
 /* Fix Input/Select backgrounds */
@@ -394,18 +388,6 @@ body {
   background: var(--scrollbar-thumb-hover);
 }
 
-/* Dark mode scrollbar */
-.dark ::-webkit-scrollbar-track {
-  background: #1f1f1f;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: #4b5563;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
-}
 
 /* Ant Design Customizations - Clean minimal style */
 .ant-card {
@@ -413,11 +395,16 @@ body {
   box-shadow: none !important;
   border: 1px solid var(--border) !important;
   background: var(--card-bg) !important;
+  color: var(--foreground) !important;
 }
 
 .ant-card:hover {
   border-color: #d0cec6 !important;
   transition: border-color 0.2s ease;
+}
+
+.dark .ant-card {
+  color: #e5e7eb !important;
 }
 
 .dark .ant-card:hover {
@@ -437,24 +424,6 @@ body {
 
 .ant-table-tbody>tr:hover>td {
   background: var(--table-row-hover) !important;
-}
-
-/* Profit row highlight */
-.ant-table-tbody>tr.bg-green-50>td {
-  background: #f0fdf4 !important;
-}
-
-.ant-table-tbody>tr.bg-green-50:hover>td {
-  background: #dcfce7 !important;
-}
-
-/* Loss row highlight */
-.ant-table-tbody>tr.bg-red-50>td {
-  background: #fef2f2 !important;
-}
-
-.ant-table-tbody>tr.bg-red-50:hover>td {
-  background: #fee2e2 !important;
 }
 
 /* Button animations */
@@ -613,14 +582,6 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Anthropic-style muted backgrounds */
-.bg-anthropic-cream {
-  background: #F5F4EF;
-}
-
-.text-anthropic-primary {
-  color: #CC785C;
-}
 
 /* Smooth but fast theme transitions - optimized for performance */
 *,
@@ -741,45 +702,6 @@ textarea,
 /* Custom utility classes */
 .shadow-card {
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-}
-
-.card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-}
-
-.bg-gradient-soft {
-  background: linear-gradient(180deg, var(--gradient-soft-from) 0%, var(--gradient-soft-to) 100%);
-}
-
-/* Text colors */
-.text-success {
-  color: var(--success-600);
-}
-
-.text-danger {
-  color: var(--danger-600);
-}
-
-.text-primary-600 {
-  color: var(--primary-600);
-}
-
-.text-primary-700 {
-  color: var(--primary-700);
-}
-
-/* Background colors */
-.bg-primary-50 {
-  background-color: var(--primary-50);
-}
-
-.bg-primary-100 {
-  background-color: var(--primary-100);
 }
 
 /* Print styles */

@@ -7,6 +7,15 @@ export {
 } from "./useStockHistory";
 export { useWarrantInfo, useWarrantsByUnderlying, useWarrantList } from "./useWarrants";
 
+// Signals hook
+export {
+  useSignals,
+  VN30_SYMBOLS,
+  type ExchangeType,
+  type StockSignalRow,
+  type SignalStats,
+} from "./useSignals";
+
 // New hooks
 export { useLocalStorage } from "./useLocalStorage";
 export {

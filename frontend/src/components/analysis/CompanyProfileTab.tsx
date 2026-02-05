@@ -137,13 +137,13 @@ export const CompanyProfileTab = React.memo(function CompanyProfileTab({
                     {data.email && (
                         <div className="flex items-center gap-2">
                             <MailOutlined className="text-gray-400" />
-                            <Link href={`mailto:${data.email}`}>{data.email}</Link>
+                            <Link href={`mailto:${data.email}`} className="!text-blue-600 dark:!text-blue-400 hover:underline">{data.email}</Link>
                         </div>
                     )}
                     {data.website && (
                         <div className="flex items-center gap-2">
                             <GlobalOutlined className="text-gray-400" />
-                            <Link href={data.website} target="_blank">{data.website}</Link>
+                            <Link href={data.website} target="_blank" className="!text-blue-600 dark:!text-blue-400 hover:underline">{data.website}</Link>
                         </div>
                     )}
                 </div>
@@ -155,7 +155,7 @@ export const CompanyProfileTab = React.memo(function CompanyProfileTab({
             <div>
                 <Text strong className="text-gray-600 dark:text-gray-300 mb-2 block">Giới thiệu</Text>
                 <div
-                    className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed"
+                    className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: data.companyProfile || "Chưa có thông tin" }}
                 />
             </div>

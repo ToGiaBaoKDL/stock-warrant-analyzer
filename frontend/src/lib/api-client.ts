@@ -31,9 +31,13 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response) {
       const status = error.response.status;
-
-      if (status === 404) {
-        console.error("Resource not found:", error.config?.url);
+      const url = error.config?.url || "";
+      
+      // Suppress 404 for history endpoints (expected for symbols without data)
+      const isHistoryEndpoint = url.includes("/history/");
+      
+      if (status === 404 && !isHistoryEndpoint) {
+        console.error("Resource not found:", url);
       } else if (status === 500) {
         console.error("Server error:", error.message);
       }

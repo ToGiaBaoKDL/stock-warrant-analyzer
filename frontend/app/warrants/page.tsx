@@ -40,6 +40,8 @@ import {
   WarrantStats,
   WarrantFormulaCards,
   WarrantUsageGuide,
+  ProfitBadge,
+  DaysRemainingBadge,
 } from "@/components";
 
 const { Content } = Layout;
@@ -113,18 +115,22 @@ function WarrantsPageContent() {
       dataIndex: "symbol",
       key: "symbol",
       width: 110,
-      render: (symbol: string, record: WarrantTableRow) => (
-        <Link href={`/analysis/${symbol}`}>
-          <div className="flex flex-col gap-0.5">
-            <Text strong style={{ color: getPriceColorHex(record.change_percent) }} className="hover:opacity-80">{symbol}</Text>
-            {record.days_to_maturity >= 0 && isNearExpiration(record.days_to_maturity) && (
-              <Tag color="warning" icon={<WarningOutlined />} className="text-[10px] px-1 py-0 leading-tight w-fit">
-                Sắp hết
-              </Tag>
-            )}
-          </div>
-        </Link>
-      ),
+      render: (symbol: string, record: WarrantTableRow) => {
+        // Use actual price change for color, not profitability
+        const symbolColor = getPriceColorHex(record.change_percent || 0);
+        return (
+          <Link href={`/analysis/${symbol}`}>
+            <div className="flex flex-col gap-0.5">
+              <Text style={{ color: symbolColor }} className="font-semibold hover:opacity-80">{symbol}</Text>
+              {record.days_to_maturity >= 0 && isNearExpiration(record.days_to_maturity) && (
+                <Tag color="warning" icon={<WarningOutlined />} className="text-[10px] px-1 py-0 leading-tight w-fit">
+                  Sắp hết
+                </Tag>
+              )}
+            </div>
+          </Link>
+        );
+      },
     },
     {
       title: (
@@ -297,8 +303,8 @@ function WarrantsPageContent() {
       width: 140,
       align: "right",
       render: (profit: number) => (
-        <div className={`px-2 py-1 rounded border font-bold ${profit >= 0 ? "bg-emerald-500 border-emerald-600 dark:bg-emerald-900/40 dark:border-emerald-700" : "bg-rose-500 border-rose-600 dark:bg-rose-900/40 dark:border-rose-700"}`}>
-          <Text strong className={profit >= 0 ? "!text-white dark:!text-emerald-300" : "!text-white dark:!text-rose-300"}>
+        <div className={`px-2 py-1 rounded border font-bold ${profit >= 0 ? "bg-emerald-50 border-emerald-300 dark:bg-emerald-900/40 dark:border-emerald-700" : "bg-rose-50 border-rose-300 dark:bg-rose-900/40 dark:border-rose-700"}`}>
+          <Text strong className={profit >= 0 ? "!text-emerald-800 dark:!text-emerald-300" : "!text-rose-800 dark:!text-rose-300"}>
             {profit >= 0 ? "+" : ""}{formatVND(profit)}
           </Text>
         </div>
@@ -316,16 +322,7 @@ function WarrantsPageContent() {
       align: "right",
       render: (percent: number) => {
         const isProfit = percent >= 0;
-        const tagStyle = {
-          backgroundColor: isProfit ? 'rgba(22, 163, 74, 0.15)' : 'rgba(220, 38, 38, 0.15)',
-          color: isProfit ? '#16a34a' : '#dc2626',
-          border: `1px solid ${isProfit ? 'rgba(22, 163, 74, 0.3)' : 'rgba(220, 38, 38, 0.3)'}`,
-        };
-        return (
-          <Tag className="font-semibold dark:!bg-transparent" style={tagStyle}>
-            {formatPercent(percent)}
-          </Tag>
-        );
+        return <ProfitBadge value={percent} isProfit={isProfit} />;
       },
     },
     {
@@ -360,27 +357,22 @@ function WarrantsPageContent() {
       ),
       dataIndex: "maturity_date",
       key: "maturity_date",
-      width: 120,
+      width: 130,
       sorter: (a, b) => a.days_to_maturity - b.days_to_maturity,
       render: (date: string, record: WarrantTableRow) => {
         const hasValidExpiry = record.days_to_maturity >= 0;
+        if (!hasValidExpiry) {
+          return (
+            <Tooltip title="Chưa có dữ liệu từ SSI">
+              <Text className="text-gray-400">N/A</Text>
+            </Tooltip>
+          );
+        }
+        const days = record.days_to_maturity;
         return (
-          <div className="flex flex-col">
-            {hasValidExpiry ? (
-              <>
-                <Text>{new Date(date).toLocaleDateString("vi-VN")}</Text>
-                <Text
-                  type="secondary"
-                  className={`text-xs ${isNearExpiration(record.days_to_maturity) ? "text-red-500 font-semibold" : ""}`}
-                >
-                  ({record.days_to_maturity} ngày)
-                </Text>
-              </>
-            ) : (
-              <Tooltip title="Chưa có dữ liệu từ SSI">
-                <Text className="text-gray-400">N/A</Text>
-              </Tooltip>
-            )}
+          <div className="flex flex-col gap-1">
+            <Text className="text-xs">{new Date(date).toLocaleDateString("vi-VN")}</Text>
+            <DaysRemainingBadge days={days} />
           </div>
         );
       },
@@ -487,7 +479,7 @@ function WarrantsPageContent() {
                       pageSizeOptions: ["10", "15", "25", "50"],
                       showTotal: (total) => `Tổng ${total} chứng quyền`
                     }}
-                    rowClassName={() => "hover:bg-slate-50 dark:hover:bg-[#2d2d2d]"}
+                    rowClassName={() => "hover:bg-slate-50 dark:hover:bg-[#2a2a2a]"}
                     size="middle"
                   />
                 </div>

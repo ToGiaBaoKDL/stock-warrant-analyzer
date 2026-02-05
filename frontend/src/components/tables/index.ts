@@ -7,3 +7,4 @@ export {
     getStockScenarioColumns,
     type ScenarioRow,
 } from "./ScenarioColumns";
+export { SignalTable, StockSymbol, IndicatorBadge, getSignalBadge, createSignalColumns } from "./SignalTable";

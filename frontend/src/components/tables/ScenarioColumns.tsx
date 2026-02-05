@@ -1,11 +1,12 @@
 "use client";
 
 import React from "react";
-import { InputNumber, Button, Tooltip, Tag, Typography } from "antd";
+import { InputNumber, Button, Tooltip, Typography } from "antd";
 import { DeleteOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import { formatVND, formatPercent } from "@/utils";
+import { formatVND } from "@/utils";
 import { AppColors } from "@/utils/theme";
+import { RoiCell, ProfitCell } from "@/components/common";
 import type { FeeSettings } from "@/stores/useWarrantStore";
 import type { ScenarioRow } from "@/types";
 
@@ -13,64 +14,6 @@ const { Text } = Typography;
 
 // Re-export for convenience
 export type { ScenarioRow };
-
-// ============================================
-// Shared Column Renderers
-// ============================================
-
-const RoiCell = React.memo(function RoiCell({
-    value,
-    isProfit,
-}: {
-    value: number;
-    isProfit: boolean;
-}) {
-    const absValue = Math.abs(value);
-    const barWidth = Math.min(absValue, 100);
-    
-    // Use inline styles for consistent colors in both themes
-    const tagStyle = {
-        backgroundColor: isProfit ? 'rgba(22, 163, 74, 0.15)' : 'rgba(220, 38, 38, 0.15)',
-        color: isProfit ? '#16a34a' : '#dc2626',
-        border: `1px solid ${isProfit ? 'rgba(22, 163, 74, 0.3)' : 'rgba(220, 38, 38, 0.3)'}`,
-    };
-    
-    return (
-        <div className="space-y-1">
-            <div className="flex items-center justify-end gap-2">
-                <Tag className="font-semibold m-0 dark:!bg-transparent" style={tagStyle}>
-                    {formatPercent(value)}
-                </Tag>
-            </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
-                <div
-                    className="h-1.5 rounded-full transition-all"
-                    style={{ width: `${barWidth}%`, backgroundColor: isProfit ? '#16a34a' : '#dc2626' }}
-                />
-            </div>
-        </div>
-    );
-});
-
-const ProfitCell = React.memo(function ProfitCell({
-    value,
-    isProfit,
-}: {
-    value: number;
-    isProfit: boolean;
-}) {
-    const bgClass = isProfit
-        ? "!bg-emerald-500 !text-white !border-emerald-600 dark:!bg-emerald-900/40 dark:!text-emerald-300 dark:!border-emerald-700"
-        : "!bg-rose-500 !text-white !border-rose-600 dark:!bg-rose-900/40 dark:!text-rose-300 dark:!border-rose-700";
-
-    return (
-        <div
-            className={`px-2 py-1 rounded font-bold text-right inline-block min-w-[90px] border ${bgClass}`}
-        >
-            {value >= 0 ? "+" : ""}{formatVND(value)}
-        </div>
-    );
-});
 
 // ============================================
 // Column Generators

@@ -11,7 +11,7 @@ import { pollingIntervals } from "@/lib/query-client";
 import type { WarrantItem, WarrantListResponse } from "@/types/api";
 import { formatVND, formatVolume, getPriceColorHex, getRefetchInterval } from "@/utils";
 import { AppColors } from "@/utils/theme";
-import { ExportButtons, SparklineCell } from "@/components";
+import { ExportButtons, SparklineCell, DaysRemainingBadge } from "@/components";
 
 const { Text } = Typography;
 
@@ -142,7 +142,7 @@ export const WarrantTable = React.memo(function WarrantTable({
                 key: "underlying_symbol",
                 width: 80,
                 render: (symbol: string) => (
-                    <Link href={`/analysis/${symbol}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                    <Link href={`/analysis/${symbol}`} style={{ color: 'var(--color-floor)' }} className="hover:underline font-semibold">
                         {symbol}
                     </Link>
                 ),
@@ -235,9 +235,7 @@ export const WarrantTable = React.memo(function WarrantTable({
                 align: "right" as const,
                 sorter: true,
                 render: (days: number) => (
-                    <Tag color={days <= 30 ? "error" : days <= 60 ? "warning" : "success"}>
-                        {days} ngày
-                    </Tag>
+                    <DaysRemainingBadge days={days} />
                 ),
             },
         ],
@@ -259,14 +257,6 @@ export const WarrantTable = React.memo(function WarrantTable({
     const handleSortChange = useCallback((value: string | null) => {
         setSortField(value);
     }, []);
-
-    const handleViewScreener = useCallback(() => {
-        if (onViewScreener) {
-            onViewScreener();
-        } else {
-            router.push("/warrants");
-        }
-    }, [onViewScreener, router]);
 
     const handleTableChange = useCallback(
         (_: unknown, __: unknown, sorter: { field?: string; order?: string } | unknown) => {
@@ -307,9 +297,6 @@ export const WarrantTable = React.memo(function WarrantTable({
                     style={{ color: AppColors.primary, borderColor: AppColors.primary }}
                 >
                     Làm mới
-                </Button>
-                <Button type="primary" onClick={handleViewScreener}>
-                    Screener chi tiết
                 </Button>
                 <ExportButtons
                     data={filteredWarrants as unknown as Record<string, unknown>[]}

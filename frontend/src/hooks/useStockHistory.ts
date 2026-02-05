@@ -59,7 +59,8 @@ export function useStockHistory(
         enabled: enabled && !!symbol,
         staleTime: 10 * 60 * 1000, // 10 minutes (same as backend cache)
         refetchOnWindowFocus: false,
-        placeholderData: (previousData, previousQuery) => previousData, // keepPreviousData logic
+        placeholderData: (previousData, previousQuery) => previousData,
+        retry: false, // Don't retry 404s for symbols without data
     });
 }
 
