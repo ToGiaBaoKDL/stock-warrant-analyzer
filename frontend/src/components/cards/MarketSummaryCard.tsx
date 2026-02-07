@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import { Card, Typography, Tag } from "antd";
+import { Card, Typography } from "antd";
 import { formatVolume } from "@/utils";
-import { AppColors } from "@/utils/theme";
 
 const { Text } = Typography;
 
@@ -74,9 +73,9 @@ export const MarketSummaryCard = React.memo(function MarketSummaryCard({
                 </div>
                 <div className="text-right">
                     <div className="flex gap-2 text-xs">
-                        <span style={{ color: AppColors.success }}>▲ {summary?.advances || 0}</span>
-                        <span style={{ color: AppColors.warning }}>- {summary?.unchanged || 0}</span>
-                        <span style={{ color: AppColors.error }}>▼ {summary?.declines || 0}</span>
+                        <span style={{ color: "var(--color-up)" }}>▲ {summary?.advances || 0}</span>
+                        <span style={{ color: "var(--color-ref)" }}>- {summary?.unchanged || 0}</span>
+                        <span style={{ color: "var(--color-down)" }}>▼ {summary?.declines || 0}</span>
                     </div>
                     <Text type="secondary" className="text-xs">
                         KL: {formatVolume(summary?.total_volume || 0)}
@@ -88,16 +87,13 @@ export const MarketSummaryCard = React.memo(function MarketSummaryCard({
             {total > 0 && (
                 <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 mt-3">
                     <div
-                        className="bg-green-500"
-                        style={{ width: `${((summary?.advances || 0) / total) * 100}%` }}
+                        style={{ width: `${((summary?.advances || 0) / total) * 100}%`, backgroundColor: "var(--color-up)" }}
                     />
                     <div
-                        className="bg-yellow-400"
-                        style={{ width: `${((summary?.unchanged || 0) / total) * 100}%` }}
+                        style={{ width: `${((summary?.unchanged || 0) / total) * 100}%`, backgroundColor: "var(--color-ref)" }}
                     />
                     <div
-                        className="bg-red-500"
-                        style={{ width: `${((summary?.declines || 0) / total) * 100}%` }}
+                        style={{ width: `${((summary?.declines || 0) / total) * 100}%`, backgroundColor: "var(--color-down)" }}
                     />
                 </div>
             )}

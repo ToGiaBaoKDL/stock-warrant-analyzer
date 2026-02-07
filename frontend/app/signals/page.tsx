@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
-import { Layout, Card, Tabs, Tag, Segmented, Spin, Button, Alert, Typography } from "antd";
+import { Layout, Card, Tabs, Tag, Button, Typography } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { MainNav } from "@/components";
 import { SignalTable } from "@/components/tables/SignalTable";
@@ -17,15 +17,16 @@ type FilterType = "ALL" | SignalStrength;
 /**
  * Signals Page - Stock Trading Signals for HOSE, HNX, VN30
  * 
- * Features:
- * - Uses same cache as homepage for stock data
- * - Calculates technical signals using 5 indicators
- * - Optimized with memoization and component extraction
+ * Uses the 3-Layer Funnel Signal System:
+ * - Layer 1: Market Regime (EMA50, MA200, ADX)
+ * - Layer 2: Setup (Trend Following vs Mean Reversion)
+ * - Layer 3: Volume Confirmation (RVOL)
+ * 
+ * Optimized with memoization and component extraction
  */
 export default function SignalsPage() {
     const [activeExchange, setActiveExchange] = useState<ExchangeType>("VN30");
     const [filter, setFilter] = useState<FilterType>("ALL");
-    const [sortBy, setSortBy] = useState<"score" | "symbol" | "change">("score");
 
     // Use custom hook for signals data
     const { 
@@ -47,20 +48,23 @@ export default function SignalsPage() {
             data = data.filter(row => row.signal?.overall === filter);
         }
 
-        // Sort
+        // Sort by signal strength (STRONG_BUY first, then BUY, etc.)
+        const STRENGTH_ORDER: Record<string, number> = {
+            STRONG_BUY: 0,
+            BUY: 1,
+            NEUTRAL: 2,
+            SELL: 3,
+            STRONG_SELL: 4,
+        };
         data.sort((a, b) => {
-            if (sortBy === "score") {
-                const scoreA = a.signal?.score ?? -999;
-                const scoreB = b.signal?.score ?? -999;
-                return scoreB - scoreA;
-            } else if (sortBy === "change") {
-                return b.changePercent - a.changePercent;
-            }
+            const orderA = a.signal ? (STRENGTH_ORDER[a.signal.overall] ?? 5) : 5;
+            const orderB = b.signal ? (STRENGTH_ORDER[b.signal.overall] ?? 5) : 5;
+            if (orderA !== orderB) return orderA - orderB;
             return a.symbol.localeCompare(b.symbol);
         });
 
         return data;
-    }, [tableData, filter, sortBy]);
+    }, [tableData, filter]);
 
     // Memoized tab change handler
     const handleExchangeChange = useCallback((key: string) => {
@@ -86,7 +90,7 @@ export default function SignalsPage() {
                                 Tín Hiệu Giao Dịch
                             </Title>
                             <Text type="secondary" className="text-sm">
-                                Phân tích kỹ thuật: RSI, MACD, Bollinger, MA, Momentum
+                                Hệ thống Phễu 3 Lớp: Xu Hướng → Chiến Thuật → Volume
                             </Text>
                         </div>
                         <Button 
@@ -140,16 +144,6 @@ export default function SignalsPage() {
                         filter={filter} 
                         onFilterChange={handleFilterChange} 
                     />
-
-                    {/* Disclaimer */}
-                    {/* <Alert
-                        title="Lưu ý"
-                        description="Tín hiệu dựa trên 5 chỉ báo kỹ thuật với trọng số. Điểm từ -100 đến +100. Chỉ mang tính tham khảo."
-                        type="warning"
-                        showIcon
-                        className="mb-1"
-                        closable
-                    /> */}
 
                     {/* Main Table */}
                     <Card styles={{ body: { padding: 0 } }}>

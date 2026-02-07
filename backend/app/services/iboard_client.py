@@ -513,14 +513,19 @@ class IboardClient:
         for u in raw_data.get('underlyingData', []):
             symbol = u.get('stockSymbol', '')
             if symbol:
+                matched = self._safe_float(u.get('matchedPrice'))
+                ref = self._safe_float(u.get('refPrice'))
+                current = matched or ref
+                change = (current - ref) if (current and ref) else 0.0
+                change_pct = ((change / ref) * 100) if ref else 0.0
                 underlying[symbol] = UnderlyingInfo(
                     symbol=symbol,
-                    current_price=self._safe_float(u.get('matchedPrice')) or self._safe_float(u.get('refPrice')),
-                    ref_price=self._safe_float(u.get('refPrice')),
+                    current_price=current,
+                    ref_price=ref,
                     ceiling=self._safe_float(u.get('ceiling')),
                     floor=self._safe_float(u.get('floor')),
-                    change=self._safe_float(u.get('priceChange')),
-                    change_percent=self._safe_float(u.get('priceChangePercent')),
+                    change=change,
+                    change_percent=round(change_pct, 2),
                 )
         
         elapsed = (time.time() - start_time) * 1000

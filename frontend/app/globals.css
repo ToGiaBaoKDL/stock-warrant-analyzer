@@ -54,6 +54,8 @@
   --color-ref: #d97706;
   --color-up: #16a34a;
   --color-down: #dc2626;
+  --color-up-bg: rgba(22, 163, 74, 0.1);
+  --color-down-bg: rgba(220, 38, 38, 0.1);
 
   /* Gradients */
   --gradient-soft-from: #f8fafc;
@@ -104,6 +106,8 @@
   /* green-400 */
   --color-down: #ff5252;
   /* red-accent */
+  --color-up-bg: rgba(74, 222, 128, 0.15);
+  --color-down-bg: rgba(255, 82, 82, 0.15);
 
   /* Gradients */
   --gradient-soft-from: #121212;
@@ -134,7 +138,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 
   /* Extend generic colors */
@@ -180,7 +184,7 @@ html {
 
 .dark .ant-table-tbody>tr>td {
   background: #1f1f1f !important;
-  color: #e5e7eb !important;
+  color: #e5e7eb;
   border-bottom: 1px solid #374151 !important;
 }
 
@@ -207,12 +211,12 @@ html {
 }
 
 /* Fix Typography */
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4,
-.dark h5,
-.dark .ant-typography {
+.dark h1:not([style*="color"]),
+.dark h2:not([style*="color"]),
+.dark h3:not([style*="color"]),
+.dark h4:not([style*="color"]),
+.dark h5:not([style*="color"]),
+.dark .ant-typography:not([style*="color"]) {
   color: #e5e7eb !important;
 }
 
@@ -362,7 +366,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;

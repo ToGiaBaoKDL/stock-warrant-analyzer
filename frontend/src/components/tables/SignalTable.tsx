@@ -1,17 +1,37 @@
 /**
  * Signal Table Components
  * 
- * Optimized components for displaying trading signals:
- * - Memoized sub-components to prevent unnecessary re-renders
- * - Extracted column definitions
+ * Displays 3-Layer Funnel trading signals:
+ * - Layer 1: Market Regime (Uptrend/Downtrend/Sideway)
+ * - Layer 2: Strategy (Trend Following / Mean Reversion)
+ * - Layer 3: Volume Confirmation (RVOL)
+ * 
+ * Optimized with memoized sub-components
  */
 
 import React, { memo, useMemo } from "react";
-import { Table, Tag, Tooltip, Spin, Badge, Progress, Space, Typography } from "antd";
+import { Table, Tag, Tooltip, Spin, Space, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined, RiseOutlined, FallOutlined } from "@ant-design/icons";
+import { 
+    ArrowUpOutlined, 
+    ArrowDownOutlined, 
+    MinusOutlined, 
+    RiseOutlined, 
+    FallOutlined,
+    ThunderboltOutlined,
+    SwapOutlined,
+    PauseCircleOutlined,
+    StopOutlined,
+    FireOutlined,
+} from "@ant-design/icons";
 import Link from "next/link";
-import { SIGNAL_COLORS, type SignalStrength } from "@/utils/indicators";
+import { 
+    SIGNAL_COLORS, 
+    type SignalStrength, 
+    type MarketRegime, 
+    type StrategyType,
+    type IndicatorSignal,
+} from "@/utils/indicators";
 import { getPricePosition, getPositionColorHex, getPriceColorHex } from "@/utils/priceColor";
 import type { StockSignalRow } from "@/hooks/useSignals";
 
@@ -57,21 +77,18 @@ export const StockSymbol = memo(function StockSymbol({
 export const IndicatorBadge = memo(function IndicatorBadge({ 
     name, 
     signal, 
-    strength,
     value,
 }: { 
     name: string; 
     signal: "bullish" | "bearish" | "neutral"; 
-    strength: number;
     value?: string;
 }) {
     const color = signal === "bullish" ? "green" : signal === "bearish" ? "red" : "default";
-    const icon = signal === "bullish" ? "✓" : signal === "bearish" ? "✗" : "○";
+    const icon = signal === "bullish" ? "+" : signal === "bearish" ? "-" : "o";
     
     const tooltipContent = (
         <div className="text-xs">
             <div className="font-semibold">{name}</div>
-            <div>Điểm: {strength > 0 ? "+" : ""}{strength.toFixed(0)}</div>
             {value && <div className="text-gray-400">{value}</div>}
         </div>
     );
@@ -97,11 +114,141 @@ const SIGNAL_BADGE_CONFIG: Record<SignalStrength, { color: string; text: string;
 };
 
 /**
+ * Market Regime badge configuration
+ */
+const REGIME_BADGE_CONFIG: Record<MarketRegime, { color: string; text: string; icon: React.ReactNode; shortText: string }> = {
+    UPTREND_STRONG: { color: "green", text: "Uptrend Mạnh", icon: <RiseOutlined />, shortText: "Up Mạnh" },
+    UPTREND_WEAK: { color: "lime", text: "Uptrend Yếu", icon: <ArrowUpOutlined />, shortText: "Up Yếu" },
+    DOWNTREND: { color: "red", text: "Downtrend", icon: <FallOutlined />, shortText: "Down" },
+    SIDEWAY: { color: "default", text: "Sideway", icon: <SwapOutlined />, shortText: "Sideway" },
+    FLOOR_PRICE: { color: "cyan", text: "Nằm Sàn", icon: <StopOutlined />, shortText: "Sàn" },
+};
+
+/**
+ * Strategy badge configuration
+ */
+const STRATEGY_BADGE_CONFIG: Record<StrategyType, { color: string; text: string; icon: React.ReactNode }> = {
+    TREND_FOLLOWING: { color: "blue", text: "Trend", icon: <ThunderboltOutlined /> },
+    MEAN_REVERSION: { color: "purple", text: "Mean Rev", icon: <SwapOutlined /> },
+    NO_SETUP: { color: "default", text: "Chờ", icon: <PauseCircleOutlined /> },
+};
+
+/**
  * Get signal badge props
  */
 export function getSignalBadge(overall: SignalStrength) {
     return SIGNAL_BADGE_CONFIG[overall];
 }
+
+/**
+ * Market Regime Badge - Memoized
+ */
+export const RegimeBadge = memo(function RegimeBadge({ 
+    regime, 
+    adx,
+    priceVsMa200,
+}: { 
+    regime: MarketRegime; 
+    adx?: number | null;
+    priceVsMa200?: number;
+}) {
+    const config = REGIME_BADGE_CONFIG[regime];
+    
+    const tooltipContent = (
+        <div className="text-xs">
+            <div className="font-semibold">{config.text}</div>
+            {adx && <div>ADX: {adx.toFixed(0)}</div>}
+            {priceVsMa200 !== undefined && (
+                <div>vs MA200: {priceVsMa200 > 0 ? "+" : ""}{priceVsMa200.toFixed(1)}%</div>
+            )}
+        </div>
+    );
+    
+    return (
+        <Tooltip title={tooltipContent}>
+            <Tag color={config.color} className="text-xs cursor-help">
+                {config.shortText}
+            </Tag>
+        </Tooltip>
+    );
+});
+
+/**
+ * Strategy Badge - Memoized
+ */
+export const StrategyBadge = memo(function StrategyBadge({ 
+    strategy, 
+    confidence,
+    reason,
+}: { 
+    strategy: StrategyType; 
+    confidence?: "strong" | "moderate" | "weak";
+    reason?: string;
+}) {
+    const config = STRATEGY_BADGE_CONFIG[strategy];
+    const confidenceLabel = confidence === "strong" ? "Mạnh" : confidence === "moderate" ? "Trung bình" : "Yếu";
+    
+    const tooltipContent = (
+        <div className="text-xs max-w-xs">
+            <div className="font-semibold">{config.text}</div>
+            {confidence && <div>Độ tin cậy: {confidenceLabel}</div>}
+            {reason && <div className="text-gray-400 mt-1">{reason}</div>}
+        </div>
+    );
+    
+    return (
+        <Tooltip title={tooltipContent}>
+            <Tag color={config.color} icon={config.icon} className="text-xs cursor-help">
+                {config.text}
+            </Tag>
+        </Tooltip>
+    );
+});
+
+/**
+ * RVOL Badge - Memoized
+ */
+export const RvolBadge = memo(function RvolBadge({ 
+    rvol, 
+    isConfirmed,
+}: { 
+    rvol: number | null; 
+    isConfirmed?: boolean;
+}) {
+    if (rvol === null) {
+        return <Tag color="default">-</Tag>;
+    }
+    
+    let color: string;
+    let icon: React.ReactNode = null;
+    
+    if (rvol >= 2.0) {
+        color = "green";
+        icon = <FireOutlined />;
+    } else if (rvol >= 1.5) {
+        color = "lime";
+    } else if (rvol >= 1.0) {
+        color = "default";
+    } else {
+        color = "orange";
+    }
+    
+    const tooltipContent = (
+        <div className="text-xs">
+            <div className="font-semibold">Relative Volume</div>
+            <div>RVOL: {rvol.toFixed(2)}x TB 20 phiên</div>
+            <div>{isConfirmed ? "Xác nhận dòng tiền" : "Chưa xác nhận"}</div>
+        </div>
+    );
+    
+    return (
+        <Tooltip title={tooltipContent}>
+            <Tag color={color} icon={icon} className="text-xs cursor-help font-mono">
+                {rvol.toFixed(1)}x
+            </Tag>
+        </Tooltip>
+    );
+});
 
 // ===========================================
 // Column Definitions
@@ -138,9 +285,9 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
                 const position = getPricePosition(price, record.refPrice, record.ceiling, record.floor);
                 const colorVar = record.refPrice > 0 ? getPositionColorHex(position) : getPriceColorHex(record.change);
                 return (
-                    <Text className="font-mono font-semibold" style={{ color: colorVar }}>
+                    <span className="font-mono font-semibold" style={{ color: colorVar }}>
                         {price > 0 ? (price / 1000).toFixed(2) : "-"}
-                    </Text>
+                    </span>
                 );
             },
         },
@@ -157,9 +304,9 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
                 return (
                     <Space size={2}>
                         {icon && <span style={{ color: colorVar }}>{icon}</span>}
-                        <Text className="font-mono text-xs" style={{ color: colorVar }}>
+                        <span className="font-mono text-xs" style={{ color: colorVar }}>
                             {record.changePercent.toFixed(2)}%
-                        </Text>
+                        </span>
                     </Space>
                 );
             },
@@ -196,6 +343,18 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
                 if (!record.signal) {
                     return <Tag color="default">N/A</Tag>;
                 }
+                
+                // Special warning for floor stocks with buy signals
+                if (record.isAtFloor && (record.signal.overall === "BUY" || record.signal.overall === "STRONG_BUY")) {
+                    return (
+                        <Tooltip title="Cổ phiếu đang nằm sàn - Cần xác nhận đảo chiều mạnh">
+                            <Tag color="cyan" icon={<StopOutlined />} className="font-semibold cursor-help">
+                                SÀN
+                            </Tag>
+                        </Tooltip>
+                    );
+                }
+                
                 const badge = getSignalBadge(record.signal.overall);
                 return (
                     <Tooltip title={record.signal.summary}>
@@ -211,35 +370,79 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             },
         },
         {
-            title: "Điểm",
-            key: "score",
-            width: 60,
+            title: "Xu Hướng",
+            key: "regime",
+            width: 85,
             align: "center",
-            sorter: (a, b) => (a.signal?.score ?? 0) - (b.signal?.score ?? 0),
-            defaultSortOrder: "descend",
+            filters: [
+                { text: "Uptrend Mạnh", value: "UPTREND_STRONG" },
+                { text: "Uptrend Yếu", value: "UPTREND_WEAK" },
+                { text: "Downtrend", value: "DOWNTREND" },
+                { text: "Sideway", value: "SIDEWAY" },
+                { text: "Nằm Sàn", value: "FLOOR_PRICE" },
+            ],
+            onFilter: (value, record) => record.marketRegime === value,
             render: (_, record) => {
                 if (record.isLoadingHistory) return <Spin size="small" />;
-                if (!record.signal) return "-";
-                
-                const score = record.signal.score;
+                if (!record.marketRegime) return <Tag color="default">-</Tag>;
                 return (
-                    <Badge 
-                        count={`${score > 0 ? "+" : ""}${score}`} 
-                        color={SIGNAL_COLORS[record.signal.overall]}
-                        className="font-mono"
+                    <RegimeBadge 
+                        regime={record.marketRegime} 
+                        adx={record.signal?.layer1.adx}
+                        priceVsMa200={record.signal?.layer1.priceVsMa200}
                     />
                 );
             },
         },
+        {
+            title: "Chiến Thuật",
+            key: "strategy",
+            width: 85,
+            align: "center",
+            filters: [
+                { text: "Trend Following", value: "TREND_FOLLOWING" },
+                { text: "Mean Reversion", value: "MEAN_REVERSION" },
+                { text: "Chờ Setup", value: "NO_SETUP" },
+            ],
+            onFilter: (value, record) => record.strategy === value,
+            render: (_, record) => {
+                if (record.isLoadingHistory) return <Spin size="small" />;
+                if (!record.strategy) return <Tag color="default">-</Tag>;
+                return (
+                    <StrategyBadge 
+                        strategy={record.strategy}
+                        confidence={record.signal?.layer2.confidence}
+                        reason={record.signal?.layer2.reason}
+                    />
+                );
+            },
+        },
+        {
+            title: "RVOL",
+            key: "rvol",
+            width: 65,
+            align: "center",
+            sorter: (a, b) => (a.rvol ?? 0) - (b.rvol ?? 0),
+            render: (_, record) => {
+                if (record.isLoadingHistory) return <Spin size="small" />;
+                return (
+                    <RvolBadge 
+                        rvol={record.rvol}
+                        isConfirmed={record.signal?.layer3.isConfirmed}
+                    />
+                );
+            },
+        },
+
         {
             title: "RSI",
             key: "rsi",
             width: 40,
             align: "center",
             render: (_, record) => {
-                const rsi = record.signal?.signals.find(s => s.indicator === "RSI");
+                const rsi = record.signal?.indicators.find((s: IndicatorSignal) => s.indicator === "RSI");
                 if (!rsi) return <Tag color="default">-</Tag>;
-                return <IndicatorBadge name="RSI" signal={rsi.signal} strength={rsi.strength} value={rsi.value} />;
+                return <IndicatorBadge name="RSI" signal={rsi.signal} value={rsi.value} />;
             },
         },
         {
@@ -248,9 +451,9 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             width: 40,
             align: "center",
             render: (_, record) => {
-                const macd = record.signal?.signals.find(s => s.indicator === "MACD");
+                const macd = record.signal?.indicators.find((s: IndicatorSignal) => s.indicator === "MACD");
                 if (!macd) return <Tag color="default">-</Tag>;
-                return <IndicatorBadge name="MACD" signal={macd.signal} strength={macd.strength} value={macd.value} />;
+                return <IndicatorBadge name="MACD" signal={macd.signal} value={macd.value} />;
             },
         },
         {
@@ -259,56 +462,12 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             width: 40,
             align: "center",
             render: (_, record) => {
-                const bb = record.signal?.signals.find(s => s.indicator === "Bollinger Bands");
+                const bb = record.signal?.indicators.find((s: IndicatorSignal) => s.indicator === "BB");
                 if (!bb) return <Tag color="default">-</Tag>;
-                return <IndicatorBadge name="Bollinger Bands" signal={bb.signal} strength={bb.strength} value={bb.value} />;
+                return <IndicatorBadge name="Bollinger Bands" signal={bb.signal} value={bb.value} />;
             },
         },
-        {
-            title: "MA",
-            key: "ma",
-            width: 40,
-            align: "center",
-            render: (_, record) => {
-                const ma = record.signal?.signals.find(s => s.indicator === "MA Trend");
-                if (!ma) return <Tag color="default">-</Tag>;
-                return <IndicatorBadge name="MA Trend" signal={ma.signal} strength={ma.strength} value={ma.value} />;
-            },
-        },
-        {
-            title: "MOM",
-            key: "momentum",
-            width: 40,
-            align: "center",
-            render: (_, record) => {
-                const mom = record.signal?.signals.find(s => s.indicator === "Momentum");
-                if (!mom) return <Tag color="default">-</Tag>;
-                return <IndicatorBadge name="Momentum" signal={mom.signal} strength={mom.strength} value={mom.value} />;
-            },
-        },
-        {
-            title: "Gauge",
-            key: "gauge",
-            width: 90,
-            render: (_, record) => {
-                if (!record.signal) return null;
-                const percent = (record.signal.score + 100) / 2;
-                return (
-                    <Progress
-                        percent={percent}
-                        size="small"
-                        showInfo={false}
-                        strokeColor={{
-                            "0%": "#D32F2F",
-                            "25%": "#FF7043",
-                            "50%": "#9E9E9E",
-                            "75%": "#7CB342",
-                            "100%": "#00C853",
-                        }}
-                    />
-                );
-            },
-        },
+
     ];
 }
 
@@ -341,6 +500,7 @@ export const SignalTable = memo(function SignalTable({ data, loading }: SignalTa
             scroll={{ x: 950 }}
             loading={loading}
             rowClassName={(record) => {
+                if (record.isAtFloor) return "bg-cyan-50 dark:bg-cyan-900/10";
                 if (!record.signal) return "";
                 if (record.signal.overall === "STRONG_BUY") return "bg-green-50 dark:bg-green-900/10";
                 if (record.signal.overall === "STRONG_SELL") return "bg-red-50 dark:bg-red-900/10";

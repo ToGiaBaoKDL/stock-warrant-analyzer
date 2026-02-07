@@ -30,10 +30,10 @@ export const WarrantStats = React.memo(function WarrantStats({ tableData, bestBr
         <Card className="shadow-sm border-0 bg-green-50 dark:bg-green-900/10" styles={{ body: { padding: 16 } }}>
           <div className="text-center">
             <Text className="text-xs text-gray-500 dark:text-gray-400 block mb-1">CW có lãi</Text>
-            <Text strong className="text-2xl text-green-600 dark:text-green-400">
+            <span className="text-2xl font-semibold text-green-600 dark:text-green-400">
               {profitableCount}
-              <Text type="secondary" className="text-sm font-normal">/{tableData.length}</Text>
-            </Text>
+              <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/{tableData.length}</span>
+            </span>
           </div>
         </Card>
       </Col>
@@ -41,9 +41,9 @@ export const WarrantStats = React.memo(function WarrantStats({ tableData, bestBr
         <Card className="shadow-sm border-0 bg-orange-50 dark:bg-orange-900/10" styles={{ body: { padding: 16 } }}>
           <div className="text-center">
             <Text className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Sắp đáo hạn (&lt;14 ngày)</Text>
-            <Text strong className="text-2xl text-orange-600 dark:text-orange-400">
+            <span className="text-2xl font-semibold text-orange-600 dark:text-orange-400">
               {nearExpiryCount}
-            </Text>
+            </span>
           </div>
         </Card>
       </Col>
@@ -57,9 +57,9 @@ export const WarrantStats = React.memo(function WarrantStats({ tableData, bestBr
                   <Tag color="blue" className="ml-1 text-xs">{bestBreakEvenWarrant.symbol}</Tag>
                 )}
               </Text>
-              <Text strong className="text-xl text-blue-600 dark:text-blue-400">
+              <span className="text-xl font-semibold text-blue-600 dark:text-blue-400">
                 {formatVND(bestBreakEvenWarrant?.breakEven || 0)}
-              </Text>
+              </span>
             </div>
           </Card>
         </Tooltip>

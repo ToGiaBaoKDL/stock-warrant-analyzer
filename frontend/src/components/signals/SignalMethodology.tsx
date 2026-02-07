@@ -1,27 +1,29 @@
 /**
  * Signal Methodology Component
- * 
- * Displays the formula, weights, and scoring methodology
- * as a clean dropdown/collapsible section with proper dark mode support
+ *
+ * Hiển thị phương pháp hệ thống Phễu 3 Lớp.
+ * Quyết định dựa hoàn toàn trên pipeline (Regime → Setup → Volume).
+ * Không sử dụng điểm trung gian.
  */
 
 import React from "react";
 import { Collapse, Typography, Space, Tag, theme } from "antd";
-import { InfoCircleOutlined, CalculatorOutlined, WarningOutlined, CheckCircleOutlined, CloseCircleOutlined, QuestionCircleOutlined } from "@ant-design/icons";
-import { SIGNAL_COLORS, type SignalStrength } from "@/utils/indicators";
+import { InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { SIGNAL_COLORS } from "@/utils/indicators";
 
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 const { useToken } = theme;
 
-// Reusable styled components for dark mode compatibility
 const CodeBlock = ({ children }: { children: React.ReactNode }) => {
     const { token } = useToken();
     return (
-        <div 
-            className="p-3 rounded-lg font-mono text-xs leading-relaxed"
-            style={{ 
+        <div
+            className="p-3 rounded-lg text-xs leading-relaxed"
+            style={{
                 backgroundColor: token.colorFillSecondary,
                 border: `1px solid ${token.colorBorderSecondary}`,
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                letterSpacing: "0.01em",
             }}
         >
             {children}
@@ -29,11 +31,11 @@ const CodeBlock = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-const InfoBox = ({ 
-    children, 
-    type = "info" 
-}: { 
-    children: React.ReactNode; 
+const InfoBox = ({
+    children,
+    type = "info",
+}: {
+    children: React.ReactNode;
     type?: "info" | "warning" | "success" | "error";
 }) => {
     const { token } = useToken();
@@ -44,9 +46,9 @@ const InfoBox = ({
         error: { bg: token.colorErrorBg, border: token.colorErrorBorder },
     };
     return (
-        <div 
+        <div
             className="p-3 rounded-lg text-sm"
-            style={{ 
+            style={{
                 backgroundColor: colors[type].bg,
                 border: `1px solid ${colors[type].border}`,
             }}
@@ -56,15 +58,19 @@ const InfoBox = ({
     );
 };
 
-const ScoringList = ({ items }: { items: { condition: string; result: string; color?: "green" | "red" }[] }) => {
+const RuleList = ({ items }: { items: { condition: string; result: string; color?: "green" | "red" }[] }) => {
     const { token } = useToken();
     return (
         <ul className="mt-2 space-y-1.5 ml-4 text-sm" style={{ color: token.colorTextSecondary }}>
             {items.map((item, i) => (
                 <li key={i} className="flex items-start gap-2">
                     <Text code className="text-xs whitespace-nowrap">{item.condition}</Text>
-                    <span>→</span>
-                    <Text style={{ color: item.color === "green" ? token.colorSuccess : item.color === "red" ? token.colorError : token.colorTextSecondary }}>
+                    <span>&rarr;</span>
+                    <Text style={{
+                        color: item.color === "green" ? token.colorSuccess
+                            : item.color === "red" ? token.colorError
+                            : token.colorTextSecondary
+                    }}>
                         {item.result}
                     </Text>
                 </li>
@@ -75,9 +81,9 @@ const ScoringList = ({ items }: { items: { condition: string; result: string; co
 
 export const SignalMethodology = React.memo(function SignalMethodology() {
     const { token } = useToken();
-    
+
     return (
-        <Collapse 
+        <Collapse
             className="mt-3"
             ghost
             expandIconPlacement="end"
@@ -87,299 +93,211 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
                     label: (
                         <Space className="text-sm">
                             <InfoCircleOutlined style={{ color: token.colorPrimary }} />
-                            <Text strong>Phương Pháp Tính Điểm & Công Thức</Text>
+                            <Text strong>Phương Pháp: Hệ Thống Phễu 3 Lớp (3-Layer Funnel)</Text>
                         </Space>
                     ),
                     children: (
                         <div style={{ backgroundColor: token.colorBgContainer }} className="rounded-lg p-1">
-                            <Collapse 
-                                ghost 
+                            <Collapse
+                                ghost
                                 defaultActiveKey={[]}
                                 expandIconPlacement="end"
                                 items={[
                                     {
                                         key: "overview",
-                                        label: (
-                                            <Space>
-                                                {/* <CalculatorOutlined style={{ color: token.colorPrimary }} /> */}
-                                                <Text strong>Tổng Quan Hệ Thống</Text>
-                                            </Space>
-                                        ),
+                                        label: <Text strong>Tổng Quan Hệ Thống</Text>,
                                         children: (
                                             <Space direction="vertical" className="w-full" size="middle">
-                                                <Paragraph style={{ color: token.colorTextSecondary, marginBottom: 0 }}>
-                                                    Hệ thống sử dụng <Text strong>5 chỉ báo kỹ thuật</Text> với trọng số khác nhau 
-                                                    để tính điểm từ <Text strong style={{ color: token.colorError }}>-100</Text> đến{" "}
-                                                    <Text strong style={{ color: token.colorSuccess }}>+100</Text>.
-                                                </Paragraph>
-                                                
+                                                <Text style={{ color: token.colorTextSecondary }}>
+                                                    Hệ thống sử dụng <Text strong>pipeline 3 lớp lọc</Text> để loại bỏ
+                                                    tín hiệu nhiễu và false positive. Tín hiệu phải vượt qua cả 3 lớp
+                                                    mới được xem là đáng tin cậy.
+                                                </Text>
+
                                                 <CodeBlock>
-                                                    <div style={{ color: token.colorTextSecondary }}>
-                                                        <Text strong style={{ color: token.colorText }}>Công thức:</Text>
+                                                    <div style={{ color: token.colorText }}>
+                                                        <Text strong style={{ color: token.colorText }}>Pipeline:</Text>
                                                         <div className="mt-2" style={{ color: token.colorText }}>
-                                                            Score = (RSI × 20%) + (MACD × 25%) + (BB × 15%) + (MA × 25%) + (MOM × 15%)
+                                                            Layer 1: Market Regime (EMA50, MA200, ADX)
+                                                        </div>
+                                                        <div style={{ color: token.colorText }}>
+                                                            &nbsp;&nbsp;&rarr; Layer 2: Setup (Trend Following / Mean Reversion)
+                                                        </div>
+                                                        <div style={{ color: token.colorText }}>
+                                                            &nbsp;&nbsp;&nbsp;&nbsp;&rarr; Layer 3: Volume Confirmation (RVOL)
+                                                        </div>
+                                                        <div className="mt-1" style={{ color: token.colorTextTertiary }}>
+                                                            Mỗi lớp là bộ lọc. Không có setup = NEUTRAL. Có setup nhưng thiếu volume = giảm bậc.
                                                         </div>
                                                     </div>
                                                 </CodeBlock>
 
                                                 <div>
-                                                    <Text strong style={{ color: token.colorText }}>Ngưỡng phân loại:</Text>
+                                                    <Text strong style={{ color: token.colorText }}>
+                                                        Quyết định cuối cùng (không dùng điểm):
+                                                    </Text>
                                                     <div className="mt-2 space-y-1.5">
-                                                        <div className="flex items-center gap-2">
-                                                            <Tag 
-                                                                style={{ 
-                                                                    // backgroundColor: SIGNAL_COLORS.STRONG_BUY,
-                                                                    borderColor: SIGNAL_COLORS.STRONG_BUY,
-                                                                    color: SIGNAL_COLORS.STRONG_BUY
-                                                                }}
-                                                                className="m-0"
-                                                            >
-                                                                STRONG BUY
-                                                            </Tag>
-                                                            <Text>Score ≥ 45 và ≥3 chỉ báo tăng</Text>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Tag 
-                                                                style={{ 
-                                                                    // backgroundColor: SIGNAL_COLORS.BUY,
-                                                                    borderColor: SIGNAL_COLORS.BUY,
-                                                                    color: SIGNAL_COLORS.BUY
-                                                                }}
-                                                                className="m-0"
-                                                            >
-                                                                BUY
-                                                            </Tag>
-                                                            <Text>Score ≥ 25 và ≥2 chỉ báo tăng</Text>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Tag 
-                                                                style={{ 
-                                                                    // backgroundColor: SIGNAL_COLORS.NEUTRAL, 
-                                                                    borderColor: SIGNAL_COLORS.NEUTRAL,
-                                                                    color: SIGNAL_COLORS.NEUTRAL
-                                                                }}
-                                                                className="m-0"
-                                                            >
-                                                                NEUTRAL
-                                                            </Tag>
-                                                            <Text>|Score| &lt; 25 hoặc tín hiệu trái chiều</Text>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Tag 
-                                                                style={{ 
-                                                                    // backgroundColor: SIGNAL_COLORS.SELL, 
-                                                                    borderColor: SIGNAL_COLORS.SELL,
-                                                                    color: SIGNAL_COLORS.SELL
-                                                                }}
-                                                                className="m-0"
-                                                            >
-                                                                SELL
-                                                            </Tag>
-                                                            <Text>Score ≤ -25 và ≥2 chỉ báo giảm</Text>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Tag 
-                                                                style={{ 
-                                                                    // backgroundColor: SIGNAL_COLORS.STRONG_SELL,
-                                                                    borderColor: SIGNAL_COLORS.STRONG_SELL,
-                                                                    color: SIGNAL_COLORS.STRONG_SELL
-                                                                }}
-                                                                className="m-0"
-                                                            >
-                                                                STRONG SELL
-                                                            </Tag>
-                                                            <Text>Score ≤ -45 và ≥3 chỉ báo giảm</Text>
-                                                        </div>
+                                                        {([
+                                                            { tag: "STRONG BUY", color: SIGNAL_COLORS.STRONG_BUY, desc: "Confidence strong + Volume xác nhận + Uptrend hoặc Sideway" },
+                                                            { tag: "BUY", color: SIGNAL_COLORS.BUY, desc: "Confidence strong (chưa volume), hoặc moderate + volume xác nhận" },
+                                                            { tag: "NEUTRAL", color: SIGNAL_COLORS.NEUTRAL, desc: "Không có setup, volume yếu, vi phạm Golden Rule, hoặc nằm sàn" },
+                                                            { tag: "SELL", color: SIGNAL_COLORS.SELL, desc: "Mean Reversion SELL trong Downtrend/Sideway" },
+                                                            { tag: "STRONG SELL", color: SIGNAL_COLORS.STRONG_SELL, desc: "SELL strong + Volume xác nhận + Downtrend/Sideway" },
+                                                        ] as const).map(({ tag, color, desc }) => (
+                                                            <div key={tag} className="flex items-center gap-2">
+                                                                <Tag style={{ borderColor: color, color }} className="m-0">{tag}</Tag>
+                                                                <Text>{desc}</Text>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </div>
 
                                                 <InfoBox type="warning">
                                                     <Text style={{ color: token.colorWarning }}>
-                                                        {/* <WarningOutlined className="mr-1" /> */}
-                                                        <strong>Lưu ý:</strong> Nếu có ≥2 chỉ báo tăng VÀ ≥2 chỉ báo giảm cùng lúc 
-                                                        → Kết luận NEUTRAL (tín hiệu trái chiều)
+                                                        <strong>Golden Rules:</strong> Uptrend chỉ tìm MUA (tín hiệu bán = NEUTRAL).
+                                                        Downtrend: BUY chỉ khi Mean Reversion strong + volume xác nhận.
+                                                        Nằm Sàn: BUY chỉ khi Mean Reversion strong + volume xác nhận.
+                                                        Không SELL ở Sàn hoặc Uptrend.
                                                     </Text>
                                                 </InfoBox>
                                             </Space>
                                         ),
                                     },
                                     {
-                                        key: "rsi",
+                                        key: "layer1",
                                         label: (
                                             <Space>
-                                                <Text strong style={{ color: token.colorText }}>RSI</Text>
-                                                <Tag color="blue" className="m-0 text-xs">20%</Tag>
-                                                <Text type="secondary" className="text-xs">Momentum</Text>
+                                                <Text strong style={{ color: token.colorText }}>Layer 1: Market Regime</Text>
+                                                <Tag color="green" className="m-0 text-xs">Xu Hướng</Tag>
                                             </Space>
                                         ),
                                         children: (
-                                            <Space orientation="vertical" className="w-full" size="small">
+                                            <Space direction="vertical" className="w-full" size="small">
                                                 <Text style={{ color: token.colorTextSecondary }} className="text-sm">
-                                                    Relative Strength Index - Đo trạng thái quá mua/quá bán.
+                                                    Xác định &quot;luật chơi&quot; TRƯỚC KHI phân tích tín hiệu. Dùng EMA50, MA200, ADX.
                                                 </Text>
 
                                                 <CodeBlock>
                                                     <div style={{ color: token.colorText }}>
-                                                        RSI = 100 - (100 / (1 + RS))
+                                                        1. Nằm Sàn: &nbsp;&nbsp;&nbsp;&nbsp;Giá &lt;= Giá sàn <span style={{ color: token.colorTextTertiary }}>(kiểm tra trước)</span>
                                                         <br />
-                                                        <span style={{ color: token.colorTextTertiary }}>RS = Avg Gain / Avg Loss | Chu kỳ: 14</span>
+                                                        2. Uptrend Mạnh: Giá &gt; MA200 &amp; EMA50 &gt; MA200 &amp; ADX &gt;= 25
+                                                        <br />
+                                                        3. Uptrend Yếu: &nbsp;Giá &gt; MA200 &amp; EMA50 &gt; MA200 &amp; ADX &lt; 25
+                                                        <br />
+                                                        4. Downtrend: &nbsp;&nbsp;&nbsp;Giá &lt; MA200
+                                                        <br />
+                                                        5. Sideway: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tất cả trường hợp còn lại
+                                                        <br />
+                                                        <span style={{ color: token.colorTextTertiary }}>Nếu không đủ dữ liệu MA200 &rarr; mặc định Sideway</span>
                                                     </div>
                                                 </CodeBlock>
 
-                                                <ScoringList items={[
-                                                    { condition: "RSI < 20", result: "+60 đến +90 điểm", color: "green" },
-                                                    { condition: "RSI 20-30", result: "+40 đến +60 điểm", color: "green" },
-                                                    { condition: "RSI 30-70", result: "-20 đến +20 điểm (trung lập)" },
-                                                    { condition: "RSI 70-80", result: "-40 đến -60 điểm", color: "red" },
-                                                    { condition: "RSI > 80", result: "-60 đến -90 điểm", color: "red" },
+                                                <RuleList items={[
+                                                    { condition: "ADX >= 25", result: "Xu hướng mạnh - Uptrend Strong (nếu giá > MA200)", color: "green" },
+                                                    { condition: "ADX < 25", result: "Xu hướng yếu - Uptrend Weak (nếu giá > MA200)" },
+                                                    { condition: "Giá < MA200", result: "Downtrend (ADX không ảnh hưởng)", color: "red" },
+                                                    { condition: "Còn lại", result: "Sideway" },
                                                 ]} />
                                             </Space>
                                         ),
                                     },
                                     {
-                                        key: "macd",
+                                        key: "layer2",
                                         label: (
                                             <Space>
-                                                <Text strong style={{ color: token.colorText }}>MACD</Text>
-                                                <Tag color="orange" className="m-0 text-xs">25%</Tag>
-                                                <Text type="secondary" className="text-xs">Trend</Text>
+                                                <Text strong style={{ color: token.colorText }}>Layer 2: Setup</Text>
+                                                <Tag color="blue" className="m-0 text-xs">Chiến Thuật</Tag>
                                             </Space>
                                         ),
                                         children: (
-                                            <Space orientation="vertical" className="w-full" size="small">
+                                            <Space direction="vertical" className="w-full" size="small">
                                                 <Text style={{ color: token.colorTextSecondary }} className="text-sm">
-                                                    Moving Average Convergence Divergence - Xác định xu hướng và động lượng.
+                                                    Chọn chiến thuật dựa trên Market Regime. Mỗi regime có logic riêng.
+                                                    Layer 2 trả về <Text code>direction</Text> (BUY/SELL/NONE) và{" "}
+                                                    <Text code>confidence</Text> (strong/moderate/weak).
                                                 </Text>
 
-                                                <CodeBlock>
-                                                    <div style={{ color: token.colorText }}>
-                                                        MACD = EMA(12) - EMA(26)
-                                                        <br />
-                                                        Signal = EMA(9) của MACD
-                                                        <br />
-                                                        <span style={{ color: token.colorTextTertiary }}>Histogram = MACD - Signal</span>
-                                                    </div>
-                                                </CodeBlock>
+                                                <div>
+                                                    <Text strong style={{ color: token.colorPrimary }}>A. Trend Following (Đánh theo xu hướng)</Text>
+                                                    <Text className="text-sm block mt-1" style={{ color: token.colorTextSecondary }}>
+                                                        Áp dụng khi: Uptrend (Mạnh hoặc Yếu). Tìm điểm pullback để mua.
+                                                        MACD hỗ trợ = MACD &gt; Signal Line hoặc Histogram &gt; 0.
+                                                    </Text>
+                                                    <RuleList items={[
+                                                        { condition: "RSI 35-55 + MACD hỗ trợ", result: "BUY, confidence moderate", color: "green" },
+                                                        { condition: "+ Uptrend Mạnh + Golden Cross gần đây", result: "BUY, confidence strong", color: "green" },
+                                                        { condition: "RSI < 35 trong uptrend", result: "NO_SETUP - Trend có thể gãy, chờ xác nhận" },
+                                                        { condition: "RSI > 70 trong uptrend", result: "NO_SETUP - Quá cao, chờ pullback" },
+                                                        { condition: "Không thỏa điều kiện trên", result: "NO_SETUP - Chưa có setup rõ ràng" },
+                                                    ]} />
+                                                </div>
 
-                                                <ScoringList items={[
-                                                    { condition: "MACD > Signal + Golden Cross", result: "+60 đến +100 điểm", color: "green" },
-                                                    { condition: "MACD > Signal (mạnh)", result: "+35 đến +75 điểm", color: "green" },
-                                                    { condition: "MACD > Signal (yếu)", result: "+15 điểm" },
-                                                    { condition: "MACD < Signal (yếu)", result: "-15 điểm" },
-                                                    { condition: "MACD < Signal (mạnh)", result: "-35 đến -75 điểm", color: "red" },
-                                                    { condition: "MACD < Signal + Death Cross", result: "-60 đến -100 điểm", color: "red" },
-                                                ]} />
+                                                <div className="mt-3">
+                                                    <Text strong style={{ color: "var(--color-ceiling)" }}>B. Mean Reversion (Bắt đáy/đỉnh cực đoan)</Text>
+                                                    <Text className="text-sm block mt-1" style={{ color: token.colorTextSecondary }}>
+                                                        Áp dụng khi: Downtrend / Sideway / Nằm Sàn. SELL chỉ trong Downtrend/Sideway (không ở Sàn).
+                                                    </Text>
+                                                    <RuleList items={[
+                                                        { condition: "Giá < BB Lower VÀ RSI < 25", result: "BUY, confidence moderate", color: "green" },
+                                                        { condition: "+ Độ lệch > 2σ hoặc RSI < 20", result: "BUY, confidence strong", color: "green" },
+                                                        { condition: "Giá > BB Upper VÀ RSI > 70", result: "SELL, confidence strong (chỉ Downtrend/Sideway)", color: "red" },
+                                                        { condition: "Chỉ 1 trong 2 điều kiện", result: "NO_SETUP - chưa đủ tín hiệu" },
+                                                    ]} />
+                                                </div>
                                             </Space>
                                         ),
                                     },
                                     {
-                                        key: "bollinger",
+                                        key: "layer3",
                                         label: (
                                             <Space>
-                                                <Text strong style={{ color: token.colorText }}>Bollinger</Text>
-                                                <Tag color="purple" className="m-0 text-xs">15%</Tag>
-                                                <Text type="secondary" className="text-xs">Volatility</Text>
+                                                <Text strong style={{ color: token.colorText }}>Layer 3: Volume Confirmation</Text>
+                                                <Tag color="gold" className="m-0 text-xs">Xác Nhận</Tag>
                                             </Space>
                                         ),
                                         children: (
-                                            <Space orientation="vertical" className="w-full" size="small">
+                                            <Space direction="vertical" className="w-full" size="small">
                                                 <Text style={{ color: token.colorTextSecondary }} className="text-sm">
-                                                    Bollinger Bands - Đo biến động và vùng quá mua/bán dựa trên %B.
+                                                    Xác nhận dòng tiền thông minh (Smart Money). Tín hiệu kỹ thuật
+                                                    KHÔNG CÓ volume xác nhận chỉ là nhiễu.
                                                 </Text>
 
                                                 <CodeBlock>
                                                     <div style={{ color: token.colorText }}>
-                                                        Middle = SMA(20) | Upper/Lower = ±2σ
+                                                        RVOL = Volume hôm nay / Trung bình Volume 20 phiên
                                                         <br />
-                                                        <span style={{ color: token.colorTextTertiary }}>%B = (Price - Lower) / (Upper - Lower)</span>
+                                                        <span style={{ color: token.colorTextTertiary }}>
+                                                            Relative Volume đo mức độ tham gia của Smart Money
+                                                        </span>
                                                     </div>
                                                 </CodeBlock>
 
-                                                <ScoringList items={[
-                                                    { condition: "%B < 0%", result: "+65 đến +100 điểm (quá bán)", color: "green" },
-                                                    { condition: "%B 0-20%", result: "+25 đến +45 điểm", color: "green" },
-                                                    { condition: "%B 20-80%", result: "-7 đến +7 điểm (trung lập)" },
-                                                    { condition: "%B 80-100%", result: "-25 đến -45 điểm", color: "red" },
-                                                    { condition: "%B > 100%", result: "-65 đến -100 điểm (quá mua)", color: "red" },
+                                                <RuleList items={[
+                                                    { condition: "RVOL >= 2.0", result: "Dòng tiền rất mạnh - Xác nhận rõ ràng", color: "green" },
+                                                    { condition: "RVOL 1.5-2.0", result: "Xác nhận mạnh - Signal đáng tin", color: "green" },
+                                                    { condition: "RVOL 1.0-1.5", result: "Bình thường - Xác nhận setup mạnh" },
+                                                    { condition: "RVOL < 1.0", result: "Yếu - Chưa xác nhận", color: "red" },
+                                                    { condition: "RVOL < 0.7", result: "Rất yếu - Signal không đáng tin", color: "red" },
                                                 ]} />
-                                            </Space>
-                                        ),
-                                    },
-                                    {
-                                        key: "ma",
-                                        label: (
-                                            <Space>
-                                                <Text strong style={{ color: token.colorText }}>MA Trend</Text>
-                                                <Tag color="cyan" className="m-0 text-xs">25%</Tag>
-                                                <Text type="secondary" className="text-xs">Trend</Text>
-                                            </Space>
-                                        ),
-                                        children: (
-                                            <Space orientation="vertical" className="w-full" size="small">
-                                                <Text style={{ color: token.colorTextSecondary }} className="text-sm">
-                                                    Moving Average Crossover - Xác định xu hướng chính qua MA20/MA50.
-                                                </Text>
 
-                                                <CodeBlock>
-                                                    <div style={{ color: token.colorText }}>
-                                                        MA20 = SMA(20) | MA50 = SMA(50)
-                                                        <br />
-                                                        <span style={{ color: token.colorTextTertiary }}>Spread = (MA20 - MA50) / MA50 × 100%</span>
-                                                    </div>
-                                                </CodeBlock>
-
-                                                <ScoringList items={[
-                                                    { condition: "Giá > MA20 > MA50 + Rising", result: "+55 đến +100 điểm", color: "green" },
-                                                    { condition: "Golden Cross", result: "+15 điểm bonus", color: "green" },
-                                                    { condition: "Xu hướng chưa rõ", result: "-25 đến +25 điểm" },
-                                                    { condition: "Giá < MA20 < MA50 + Falling", result: "-55 đến -100 điểm", color: "red" },
-                                                    { condition: "Death Cross", result: "-15 điểm bonus", color: "red" },
-                                                ]} />
-                                            </Space>
-                                        ),
-                                    },
-                                    {
-                                        key: "momentum",
-                                        label: (
-                                            <Space>
-                                                <Text strong style={{ color: token.colorText }}>Momentum</Text>
-                                                <Tag color="magenta" className="m-0 text-xs">15%</Tag>
-                                                <Text type="secondary" className="text-xs">Strength</Text>
-                                            </Space>
-                                        ),
-                                        children: (
-                                            <Space orientation="vertical" className="w-full" size="small">
-                                                <Text style={{ color: token.colorTextSecondary }} className="text-sm">
-                                                    Price Momentum - Đo tốc độ thay đổi giá, chuẩn hóa theo ATR.
-                                                </Text>
-
-                                                <CodeBlock>
-                                                    <div style={{ color: token.colorText }}>
-                                                        ROC = (Close - Close[10]) / Close[10] × 100%
-                                                        <br />
-                                                        <span style={{ color: token.colorTextTertiary }}>Score = (ROC / ATR%) × 18 | Giới hạn ±85</span>
-                                                    </div>
-                                                </CodeBlock>
-
-                                                <ScoringList items={[
-                                                    { condition: "Momentum > +18", result: "Tín hiệu tăng", color: "green" },
-                                                    { condition: "Momentum -18 đến +18", result: "Trung lập" },
-                                                    { condition: "Momentum < -18", result: "Tín hiệu giảm", color: "red" },
-                                                    { condition: "Consistent (3 periods)", result: "±10 điểm bonus" },
-                                                ]} />
+                                                <InfoBox type="info">
+                                                    <Text style={{ color: token.colorTextSecondary }}>
+                                                        <strong>Quy tắc xác nhận:</strong> Setup &quot;strong&quot; chỉ cần RVOL &gt;= 1.0.
+                                                        Setup &quot;moderate&quot; cần RVOL &gt;= 1.2 (ngưỡng mặc định).
+                                                        RVOL &gt;= 1.5 được tính là &quot;strong&quot; volume.
+                                                    </Text>
+                                                </InfoBox>
                                             </Space>
                                         ),
                                     },
                                     {
                                         key: "disclaimer",
                                         label: (
-                                            <Space>
-                                                {/* <WarningOutlined style={{ color: token.colorWarning }} /> */}
-                                                <Text strong style={{ color: token.colorWarning }}>Lưu Ý Quan Trọng</Text>
-                                            </Space>
+                                            <Text strong style={{ color: token.colorWarning }}>Lưu Ý Quan Trọng</Text>
                                         ),
                                         children: (
-                                            <Space orientation="vertical" className="w-full" size="middle">
+                                            <Space direction="vertical" className="w-full" size="middle">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <InfoBox type="success">
                                                         <div className="flex items-start gap-2">
@@ -387,25 +305,25 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
                                                             <div>
                                                                 <Text strong style={{ color: token.colorSuccess }}>Nên làm:</Text>
                                                                 <ul className="mt-1 text-xs space-y-0.5 ml-4" style={{ color: token.colorTextSecondary }}>
-                                                                    <li>Kết hợp phân tích cơ bản</li>
-                                                                    <li>Xem xét tin tức và thanh khoản</li>
-                                                                    <li>Đặt stop-loss hợp lý</li>
-                                                                    <li>Ưu tiên ≥4/5 chỉ báo cùng chiều</li>
+                                                                    <li>Ưu tiên STRONG BUY/SELL (có volume xác nhận)</li>
+                                                                    <li>Trend Following trong Uptrend, Mean Reversion khi oversold</li>
+                                                                    <li>Kiểm tra RVOL - Tín hiệu thiếu volume chỉ là nhiễu</li>
+                                                                    <li>Đặt stop-loss trước khi vào lệnh</li>
                                                                 </ul>
                                                             </div>
                                                         </div>
                                                     </InfoBox>
-                                                    
+
                                                     <InfoBox type="error">
                                                         <div className="flex items-start gap-2">
                                                             <CloseCircleOutlined style={{ color: token.colorError, marginTop: 2 }} />
                                                             <div>
                                                                 <Text strong style={{ color: token.colorError }}>Không nên:</Text>
                                                                 <ul className="mt-1 text-xs space-y-0.5 ml-4" style={{ color: token.colorTextSecondary }}>
-                                                                    <li>All-in vào 1 cổ phiếu</li>
-                                                                    <li>Bỏ qua tín hiệu NEUTRAL</li>
-                                                                    <li>Giao dịch cổ phiếu kém thanh khoản</li>
-                                                                    <li>Mua khi có tin xấu dù điểm tốt</li>
+                                                                    <li>Mua cổ phiếu nằm sàn khi không có volume xác nhận</li>
+                                                                    <li>Mean Reversion BUY khi RSI &gt;= 25 (chưa đủ cực đoan)</li>
+                                                                    <li>Bỏ qua Market Regime - Layer 1 quyết định luật chơi</li>
+                                                                    <li>BUY trong Downtrend khi chưa có setup strong + volume</li>
                                                                 </ul>
                                                             </div>
                                                         </div>
@@ -413,13 +331,11 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
                                                 </div>
 
                                                 <InfoBox type="warning">
-                                                    <div className="flex items-start gap-2">
-                                                        {/* <QuestionCircleOutlined style={{ color: token.colorWarning, marginTop: 2 }} /> */}
-                                                        <Text className="text-xs" style={{ color: token.colorTextSecondary }}>
-                                                            <strong style={{ color: token.colorWarning }}>Disclaimer:</strong> Chỉ báo kỹ thuật dựa trên dữ liệu lịch sử 
-                                                            và không đảm bảo kết quả tương lai. Nên tham khảo ý kiến chuyên gia tài chính.
-                                                        </Text>
-                                                    </div>
+                                                    <Text className="text-xs" style={{ color: token.colorTextSecondary }}>
+                                                        <strong style={{ color: token.colorWarning }}>Disclaimer:</strong> Hệ thống dựa trên
+                                                        phân tích kỹ thuật từ dữ liệu lịch sử và không đảm bảo kết quả tương lai.
+                                                        Nên kết hợp phân tích cơ bản, tin tức và tham khảo ý kiến chuyên gia tài chính.
+                                                    </Text>
                                                 </InfoBox>
                                             </Space>
                                         ),

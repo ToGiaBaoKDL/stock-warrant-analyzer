@@ -1,10 +1,8 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
-import { Result, Button, Typography } from "antd";
+import { Result, Button } from "antd";
 import { WarningOutlined, ReloadOutlined } from "@ant-design/icons";
-
-const { Text, Paragraph } = Typography;
 
 interface Props {
   children: ReactNode;
@@ -93,20 +91,18 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             {process.env.NODE_ENV === "development" && this.state.error && (
               <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/30 rounded-lg text-left max-w-lg mx-auto">
-                <Text strong className="text-red-700 dark:text-red-300 block mb-2">Chi tiết lỗi (dev only):</Text>
-                <Paragraph
-                  code
-                  className="text-xs text-red-600 dark:text-red-400 overflow-auto max-h-32"
+                <span className="font-semibold text-red-700 dark:text-red-300 block mb-2">Chi tiết lỗi (dev only):</span>
+                <pre
+                  className="text-xs text-red-600 dark:text-red-400 overflow-auto max-h-32 bg-gray-100 dark:bg-gray-800 rounded p-2 whitespace-pre-wrap"
                 >
-                  {this.state.error.message}
-                </Paragraph>
+                  <code>{this.state.error.message}</code>
+                </pre>
                 {this.state.error.stack && (
-                  <Paragraph
-                    code
-                    className="text-xs text-red-500 dark:text-red-400 overflow-auto max-h-40 mt-2"
+                  <pre
+                    className="text-xs text-red-500 dark:text-red-400 overflow-auto max-h-40 mt-2 bg-gray-100 dark:bg-gray-800 rounded p-2 whitespace-pre-wrap"
                   >
-                    {this.state.error.stack.slice(0, 500)}...
-                  </Paragraph>
+                    <code>{this.state.error.stack.slice(0, 500)}...</code>
+                  </pre>
                 )}
               </div>
             )}

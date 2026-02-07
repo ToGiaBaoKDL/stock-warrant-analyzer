@@ -4,8 +4,7 @@ import React from "react";
 import { Card, Spin, Typography, Tag, Table } from "antd";
 import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined } from "@ant-design/icons";
 import type { StockItem, WarrantItem } from "@/types/api";
-import { formatVND, getFullPriceColorHex, getPriceColorHex } from "@/utils";
-import { AppColors } from "@/utils/theme";
+import { formatVND, getFullPriceColorHex } from "@/utils";
 
 const { Text, Title } = Typography;
 
@@ -60,8 +59,8 @@ export const PriceInfoTab = React.memo(function PriceInfoTab({
         : getFullPriceColorHex(
             warrantData.current_price,
             warrantData.ref_price || warrantData.current_price - warrantData.change,
-            warrantData.ceiling || warrantData.current_price * 1.15,
-            warrantData.floor || warrantData.current_price * 0.85
+            warrantData.ceiling,
+            warrantData.floor
         );
 
     const changeColor = priceColor; // Same color for change

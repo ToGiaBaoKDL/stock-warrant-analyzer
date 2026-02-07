@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Card, Badge, Tooltip, Progress, Tag, Space, Typography } from "antd";
+import { Card, Badge, Tooltip, Tag, Typography } from "antd";
 import { 
     ArrowUpOutlined, 
     ArrowDownOutlined, 
@@ -10,9 +10,9 @@ import {
     BarChartOutlined,
 } from "@ant-design/icons";
 import {
-    generateTradingSignal,
+    generateFunnelSignal,
     SIGNAL_COLORS,
-    type TradingSignal,
+    type FunnelSignal,
     type IndicatorSignal,
     type SignalStrength,
 } from "@/utils/indicators";
@@ -25,6 +25,8 @@ interface TradingSignalPanelProps {
     lows: number[];
     volumes: number[];
     symbol: string;
+    floor?: number;
+    ceiling?: number;
 }
 
 /**
@@ -33,9 +35,9 @@ interface TradingSignalPanelProps {
 function getSignalIcon(signal: "bullish" | "bearish" | "neutral") {
     switch (signal) {
         case "bullish":
-            return <ArrowUpOutlined className="text-green-500" />;
+            return <ArrowUpOutlined style={{ color: "var(--color-up)" }} />;
         case "bearish":
-            return <ArrowDownOutlined className="text-red-500" />;
+            return <ArrowDownOutlined style={{ color: "var(--color-down)" }} />;
         default:
             return <MinusOutlined className="text-gray-500" />;
     }
@@ -59,23 +61,11 @@ function getSignalBadge(overall: SignalStrength) {
  * Individual indicator row
  */
 function IndicatorRow({ signal }: { signal: IndicatorSignal }) {
-    const progressColor = signal.strength > 0 ? "#52c41a" : signal.strength < 0 ? "#f5222d" : "#d9d9d9";
-    const normalizedStrength = (signal.strength + 100) / 2; // Convert -100~100 to 0~100
-
     return (
         <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
             <div className="flex items-center gap-2 flex-1">
                 {getSignalIcon(signal.signal)}
                 <Text className="font-medium text-sm">{signal.indicator}</Text>
-            </div>
-            <div className="flex-1 px-4">
-                <Progress
-                    percent={normalizedStrength}
-                    size="small"
-                    showInfo={false}
-                    strokeColor={progressColor}
-                    railColor="#e8e8e8"
-                />
             </div>
             <div className="flex-1 text-right">
                 <Tooltip title={signal.reason}>
@@ -83,7 +73,7 @@ function IndicatorRow({ signal }: { signal: IndicatorSignal }) {
                         color={signal.signal === "bullish" ? "green" : signal.signal === "bearish" ? "red" : "default"}
                         className="cursor-help"
                     >
-                        {signal.strength > 0 ? "+" : ""}{signal.strength.toFixed(0)}
+                        {signal.value || signal.signal}
                     </Tag>
                 </Tooltip>
             </div>
@@ -102,14 +92,16 @@ export function TradingSignalPanel({
     lows,
     volumes,
     symbol,
+    floor,
+    ceiling,
 }: TradingSignalPanelProps) {
-    // Calculate trading signal
-    const tradingSignal = useMemo<TradingSignal | null>(() => {
+    // Calculate trading signal with floor/ceiling for VN market
+    const tradingSignal = useMemo<FunnelSignal | null>(() => {
         if (!closes || closes.length < 50) {
             return null;
         }
-        return generateTradingSignal(closes, highs, lows, volumes);
-    }, [closes, highs, lows, volumes]);
+        return generateFunnelSignal(closes, highs, lows, volumes, floor, ceiling);
+    }, [closes, highs, lows, volumes, floor, ceiling]);
 
     if (!tradingSignal) {
         return (
@@ -123,7 +115,6 @@ export function TradingSignalPanel({
     }
 
     const badgeConfig = getSignalBadge(tradingSignal.overall);
-    const scoreColor = tradingSignal.score > 0 ? "text-green-500" : tradingSignal.score < 0 ? "text-red-500" : "text-gray-500";
 
     return (
         <Card 
@@ -138,8 +129,8 @@ export function TradingSignalPanel({
                 <Badge 
                     color={SIGNAL_COLORS[tradingSignal.overall]}
                     text={
-                        <Text strong className={scoreColor}>
-                            {tradingSignal.score > 0 ? "+" : ""}{tradingSignal.score}
+                        <Text strong>
+                            {badgeConfig.text}
                         </Text>
                     }
                 />
@@ -156,32 +147,13 @@ export function TradingSignalPanel({
                 </Text>
             </div>
 
-            {/* Score Gauge */}
-            <div className="mb-4">
-                <div className="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>Bán mạnh</span>
-                    <span>Trung lập</span>
-                    <span>Mua mạnh</span>
-                </div>
-                <Progress
-                    percent={(tradingSignal.score + 100) / 2}
-                    size="small"
-                    showInfo={false}
-                    strokeColor={{
-                        "0%": "#f5222d",
-                        "50%": "#faad14",
-                        "100%": "#52c41a",
-                    }}
-                />
-            </div>
-
             {/* Individual Indicators */}
             <div className="mt-4">
                 <Text strong className="text-sm mb-2 block text-gray-600 dark:text-gray-400">
                     Chi tiết các chỉ báo:
                 </Text>
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-2">
-                    {tradingSignal.signals.map((signal, index) => (
+                    {tradingSignal.indicators.map((signal: IndicatorSignal, index: number) => (
                         <IndicatorRow key={index} signal={signal} />
                     ))}
                 </div>

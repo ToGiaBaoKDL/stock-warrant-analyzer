@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import {
-  DEFAULT_BUY_FEE_PERCENT,
   DEFAULT_SELL_FEE_PERCENT,
   DEFAULT_SELL_TAX_PERCENT,
 } from "@/utils/calculations";

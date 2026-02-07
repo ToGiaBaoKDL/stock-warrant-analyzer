@@ -29,7 +29,8 @@ import {
   isNearExpiration,
   formatVND,
   formatPercent,
-  getPriceColorHex
+  getPriceColorHex,
+  getFullPriceColorHex
 } from "@/utils";
 import { AppColors } from "@/utils/theme";
 import {
@@ -116,12 +117,12 @@ function WarrantsPageContent() {
       key: "symbol",
       width: 110,
       render: (symbol: string, record: WarrantTableRow) => {
-        // Use actual price change for color, not profitability
-        const symbolColor = getPriceColorHex(record.change_percent || 0);
+        // Use 5-color system based on CW's own ceiling/floor
+        const symbolColor = getFullPriceColorHex(record.current_price, record.ref_price, record.ceiling, record.floor);
         return (
           <Link href={`/analysis/${symbol}`}>
             <div className="flex flex-col gap-0.5">
-              <Text style={{ color: symbolColor }} className="font-semibold hover:opacity-80">{symbol}</Text>
+              <span style={{ color: symbolColor }} className="font-semibold hover:opacity-80">{symbol}</span>
               {record.days_to_maturity >= 0 && isNearExpiration(record.days_to_maturity) && (
                 <Tag color="warning" icon={<WarningOutlined />} className="text-[10px] px-1 py-0 leading-tight w-fit">
                   Sắp hết
@@ -161,9 +162,12 @@ function WarrantsPageContent() {
       key: "current_price",
       width: 90,
       align: "right",
-      render: (price: number) => (
-        <Text strong>{formatVND(price)}</Text>
-      ),
+      render: (price: number, record: WarrantTableRow) => {
+        const priceColor = getFullPriceColorHex(price, record.ref_price, record.ceiling, record.floor);
+        return (
+          <span className="font-semibold font-mono" style={{ color: priceColor }}>{formatVND(price)}</span>
+        );
+      },
     },
     {
       title: (
@@ -177,13 +181,13 @@ function WarrantsPageContent() {
       align: "right",
       sorter: (a, b) => a.volume - b.volume,
       render: (volume: number) => (
-        <Text className="text-slate-600 dark:text-slate-400">
+        <span className="text-slate-600 dark:text-slate-400">
           {volume >= 1000000
             ? `${(volume / 1000000).toFixed(1)}M`
             : volume >= 1000
               ? `${(volume / 1000).toFixed(0)}K`
               : volume.toLocaleString()}
-        </Text>
+        </span>
       ),
     },
     {
@@ -304,9 +308,9 @@ function WarrantsPageContent() {
       align: "right",
       render: (profit: number) => (
         <div className={`px-2 py-1 rounded border font-bold ${profit >= 0 ? "bg-emerald-50 border-emerald-300 dark:bg-emerald-900/40 dark:border-emerald-700" : "bg-rose-50 border-rose-300 dark:bg-rose-900/40 dark:border-rose-700"}`}>
-          <Text strong className={profit >= 0 ? "!text-emerald-800 dark:!text-emerald-300" : "!text-rose-800 dark:!text-rose-300"}>
+          <span className={`font-bold ${profit >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-rose-800 dark:text-rose-300"}`}>
             {profit >= 0 ? "+" : ""}{formatVND(profit)}
-          </Text>
+          </span>
         </div>
       ),
     },
@@ -339,13 +343,13 @@ function WarrantsPageContent() {
       render: (percent: number, record: WarrantTableRow) => (
         <Space>
           {record.isProfitable ? (
-            <CheckCircleOutlined className="text-green-500 dark:text-green-400" />
+            <CheckCircleOutlined className="text-emerald-600 dark:text-emerald-400" />
           ) : (
-            <WarningOutlined className="text-red-500 dark:text-red-400" />
+            <WarningOutlined className="text-rose-600 dark:text-rose-400" />
           )}
-          <Text strong className={record.isProfitable ? "!text-green-600 dark:!text-green-400" : "!text-red-600 dark:!text-red-400"}>
+          <span className={`font-bold ${record.isProfitable ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}`}>
             {formatPercent(percent)}
-          </Text>
+          </span>
         </Space>
       ),
     },
@@ -364,7 +368,7 @@ function WarrantsPageContent() {
         if (!hasValidExpiry) {
           return (
             <Tooltip title="Chưa có dữ liệu từ SSI">
-              <Text className="text-gray-400">N/A</Text>
+              <span className="text-gray-400">N/A</span>
             </Tooltip>
           );
         }

@@ -32,7 +32,6 @@ import {
   InfoCircleOutlined,
   FireOutlined,
   BulbOutlined,
-  WarningOutlined,
   QuestionCircleOutlined,
   ThunderboltOutlined,
   LineChartOutlined,
@@ -50,9 +49,6 @@ import {
   formatVND,
   formatPercent,
   DEFAULT_BUY_FEE_PERCENT,
-  DEFAULT_SELL_FEE_PERCENT,
-  DEFAULT_SELL_TAX_PERCENT,
-  isNearExpiration
 } from "@/utils";
 import { AppColors } from "@/utils/theme";
 import {
@@ -301,11 +297,6 @@ export default function AnalysisPage() {
     return principal + buyFee;
   }, [position, feeSettings]);
 
-  const principal = useMemo(() => {
-    if (!position) return 0;
-    return position.buyPrice * position.quantity;
-  }, [position]);
-
   // Break-even calculation for warrants
   const breakEvenResult = useMemo(() => {
     if (!isWarrant || !warrantData) return null;
@@ -315,29 +306,6 @@ export default function AnalysisPage() {
       warrantData.exercise_price
     );
   }, [isWarrant, warrantData]);
-
-  // Summary stats for scenarios
-  const scenarioStats = useMemo(() => {
-    if (scenarioResults.length === 0) return null;
-
-    const profits = scenarioResults.map(s => s.profit);
-    const profitPercents = scenarioResults.map(s => s.profitPercent);
-
-    const best = scenarioResults.reduce((max, s) => s.profit > max.profit ? s : max, scenarioResults[0]);
-    const worst = scenarioResults.reduce((min, s) => s.profit < min.profit ? s : min, scenarioResults[0]);
-    const avgProfit = profits.reduce((a, b) => a + b, 0) / profits.length;
-    const avgProfitPercent = profitPercents.reduce((a, b) => a + b, 0) / profitPercents.length;
-    const profitableCount = scenarioResults.filter(s => s.isProfit).length;
-
-    return {
-      best,
-      worst,
-      avgProfit,
-      avgProfitPercent,
-      profitableCount,
-      totalCount: scenarioResults.length
-    };
-  }, [scenarioResults]);
 
   // Handle position initialization
   const initPosition = () => {
@@ -482,8 +450,6 @@ export default function AnalysisPage() {
       </Layout>
     );
   }
-
-  const nearExpiration = isWarrant && warrantData ? isNearExpiration(warrantData.days_to_maturity) : false;
 
   return (
     <Layout className="min-h-screen" style={{ background: 'var(--background)' }}>
@@ -684,13 +650,13 @@ export default function AnalysisPage() {
 
                     {/* Right Group: Total Cost */}
                     <div className="!bg-gray-900 dark:!bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-md flex flex-col justify-center items-end text-right w-fit min-w-[200px]">
-                      <Text className="text-xs font-bold uppercase tracking-wide mb-1 whitespace-nowrap !text-gray-300">
+                      <span className="text-xs font-bold uppercase tracking-wide mb-1 whitespace-nowrap text-gray-300">
                         Tổng vốn đầu tư
-                      </Text>
+                      </span>
                       <div className="flex items-baseline gap-2 justify-end">
-                        <Text strong className="text-2xl whitespace-nowrap !text-primary-500">
+                        <span className="font-bold text-2xl whitespace-nowrap text-primary-500">
                           {formatVND(totalCost)}
-                        </Text>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -701,10 +667,10 @@ export default function AnalysisPage() {
                   <div className="space-y-3">
                     <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
                       <div className="flex items-center gap-4 flex-wrap">
-                        <Text className="!text-gray-700 dark:!text-gray-300">
+                        <span className="text-gray-700 dark:text-gray-300">
                           <BulbOutlined className="mr-1" />
                           Thêm nhanh:
-                        </Text>
+                        </span>
                         <Space wrap>
                           {quickPresets.map((preset) => (
                             <Button

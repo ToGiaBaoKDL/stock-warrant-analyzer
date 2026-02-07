@@ -33,15 +33,9 @@ export function isMarketOpen(): boolean {
 /**
  * Get polling interval based on market hours
  * Returns the interval if market is open, false otherwise (disables polling)
- */
-export function getPollingInterval(intervalMs: number): number | false {
-    return isMarketOpen() ? intervalMs : false;
-}
-
-/**
- * Hook-friendly function to get refetchInterval for react-query
+ * 
  * Usage: refetchInterval: getRefetchInterval(10000)
  */
 export function getRefetchInterval(intervalMs: number): number | false {
-    return getPollingInterval(intervalMs);
+    return isMarketOpen() ? intervalMs : false;
 }

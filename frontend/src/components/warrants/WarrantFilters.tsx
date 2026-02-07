@@ -8,7 +8,7 @@ import {
   Segmented,
 } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
-import { formatVND, formatPercent } from "@/utils";
+import { formatVND, formatPercent, getFullPriceColorHex } from "@/utils";
 import { ExportButtons, FeeSettingsButton } from "@/components";
 import type { ProfitFilter, SortOption, WarrantTableRow } from "@/hooks";
 import type { UnderlyingInfo } from "@/types/api";
@@ -135,9 +135,14 @@ export const WarrantFilters = React.memo(function WarrantFilters({
               <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 flex flex-col items-end mr-2">
                 <span className="text-[10px] text-gray-400 font-medium uppercase">Hiện tại</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-gray-800 dark:text-gray-100">{formatVND(underlyingInfo.current_price)}</span>
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${(underlyingInfo.change ?? 0) >= 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                    }`}>
+                  <span className="font-bold" style={{ color: getFullPriceColorHex(underlyingInfo.current_price, underlyingInfo.ref_price, underlyingInfo.ceiling, underlyingInfo.floor) }}>{formatVND(underlyingInfo.current_price)}</span>
+                  <span 
+                    className="text-xs font-bold px-1.5 py-0.5 rounded"
+                    style={{ 
+                      color: getFullPriceColorHex(underlyingInfo.current_price, underlyingInfo.ref_price, underlyingInfo.ceiling, underlyingInfo.floor),
+                      backgroundColor: (underlyingInfo.change ?? 0) >= 0 ? 'var(--color-up-bg, rgba(22,163,74,0.1))' : 'var(--color-down-bg, rgba(220,38,38,0.1))',
+                    }}
+                  >
                     {(underlyingInfo.change_percent ?? 0) > 0 ? "+" : ""}{formatPercent(underlyingInfo.change_percent ?? 0)}
                   </span>
                 </div>

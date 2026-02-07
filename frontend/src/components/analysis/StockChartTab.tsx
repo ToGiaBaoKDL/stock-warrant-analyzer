@@ -90,6 +90,17 @@ export const StockChartTab = React.memo(function StockChartTab({
     const bbLowerSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
     const volumeMASeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
     
+    // MACD series refs for proper cleanup
+    const macdHistSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+    const macdLineSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+    const macdSignalSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+    
+    // RSI series refs for proper cleanup
+    const rsiLineSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+    const rsiOverboughtRef = useRef<ISeriesApi<"Line"> | null>(null);
+    const rsiOversoldRef = useRef<ISeriesApi<"Line"> | null>(null);
+    const rsiMiddleRef = useRef<ISeriesApi<"Line"> | null>(null);
+    
     // Ichimoku refs (overlay on main chart)
     const ichimokuTenkanRef = useRef<ISeriesApi<"Line"> | null>(null);
     const ichimokuKijunRef = useRef<ISeriesApi<"Line"> | null>(null);
@@ -392,8 +403,8 @@ export const StockChartTab = React.memo(function StockChartTab({
         } else if (chartType === "area") {
             mainSeries = chart.addSeries(AreaSeries, {
                 lineColor: AppColors.primary,
-                topColor: "rgba(59, 130, 246, 0.4)",
-                bottomColor: "rgba(59, 130, 246, 0.0)",
+                topColor: colors.areaTopColor,
+                bottomColor: colors.areaBottomColor,
                 lineWidth: 2,
                 priceLineVisible: showPriceLines,
                 lastValueVisible: true,
@@ -716,7 +727,18 @@ export const StockChartTab = React.memo(function StockChartTab({
 
         const macdChart = macdChartRef.current;
 
-        // MACD Histogram
+        // Clean up previous MACD series to prevent memory leaks
+        const safeRemoveMacdSeries = (ref: React.MutableRefObject<ISeriesApi<"Histogram" | "Line"> | null>) => {
+            if (ref.current) {
+                try { macdChart.removeSeries(ref.current); } catch { /* ignore */ }
+                ref.current = null;
+            }
+        };
+        safeRemoveMacdSeries(macdHistSeriesRef as React.MutableRefObject<ISeriesApi<"Histogram" | "Line"> | null>);
+        safeRemoveMacdSeries(macdLineSeriesRef as React.MutableRefObject<ISeriesApi<"Histogram" | "Line"> | null>);
+        safeRemoveMacdSeries(macdSignalSeriesRef as React.MutableRefObject<ISeriesApi<"Histogram" | "Line"> | null>);
+
+        // MACD Histogram (removeNulls already adds TIME_OFFSET)
         const { timestamps: histT, values: histV } = removeNulls(data.t, calculatedIndicators.macd.histogram);
         const histSeries = macdChart.addSeries(HistogramSeries, {
             color: MACD_COLORS.histogramUp,
@@ -725,12 +747,13 @@ export const StockChartTab = React.memo(function StockChartTab({
             lastValueVisible: true,
         });
         histSeries.setData(histT.map((time, i) => ({
-            time: (time + TIME_OFFSET) as UTCTimestamp,
+            time,
             value: histV[i],
             color: histV[i] >= 0 ? MACD_COLORS.histogramUp : MACD_COLORS.histogramDown,
         })));
+        macdHistSeriesRef.current = histSeries;
 
-        // MACD Line
+        // MACD Line (removeNulls already adds TIME_OFFSET)
         const { timestamps: macdT, values: macdV } = removeNulls(data.t, calculatedIndicators.macd.macd);
         const macdLineSeries = macdChart.addSeries(LineSeries, {
             color: MACD_COLORS.macdLine,
@@ -739,9 +762,10 @@ export const StockChartTab = React.memo(function StockChartTab({
             priceLineVisible: false,
             lastValueVisible: true,
         });
-        macdLineSeries.setData(macdT.map((time, i) => ({ time: (time + TIME_OFFSET) as UTCTimestamp, value: macdV[i] })));
+        macdLineSeries.setData(macdT.map((time, i) => ({ time, value: macdV[i] })));
+        macdLineSeriesRef.current = macdLineSeries;
 
-        // Signal Line
+        // Signal Line (removeNulls already adds TIME_OFFSET)
         const { timestamps: sigT, values: sigV } = removeNulls(data.t, calculatedIndicators.macd.signal);
         const signalSeries = macdChart.addSeries(LineSeries, {
             color: MACD_COLORS.signalLine,
@@ -750,7 +774,8 @@ export const StockChartTab = React.memo(function StockChartTab({
             priceLineVisible: false,
             lastValueVisible: true,
         });
-        signalSeries.setData(sigT.map((time, i) => ({ time: (time + TIME_OFFSET) as UTCTimestamp, value: sigV[i] })));
+        signalSeries.setData(sigT.map((time, i) => ({ time, value: sigV[i] })));
+        macdSignalSeriesRef.current = signalSeries;
 
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
@@ -806,7 +831,19 @@ export const StockChartTab = React.memo(function StockChartTab({
 
         const rsiChart = rsiChartRef.current;
 
-        // RSI Line
+        // Clean up previous RSI series to prevent memory leaks
+        const safeRemoveRsiSeries = (ref: React.MutableRefObject<ISeriesApi<"Line"> | null>) => {
+            if (ref.current) {
+                try { rsiChart.removeSeries(ref.current); } catch { /* ignore */ }
+                ref.current = null;
+            }
+        };
+        safeRemoveRsiSeries(rsiLineSeriesRef);
+        safeRemoveRsiSeries(rsiOverboughtRef);
+        safeRemoveRsiSeries(rsiOversoldRef);
+        safeRemoveRsiSeries(rsiMiddleRef);
+
+        // RSI Line (removeNulls already adds TIME_OFFSET)
         const { timestamps: rsiT, values: rsiV } = removeNulls(data.t, calculatedIndicators.rsi);
         const rsiSeries = rsiChart.addSeries(LineSeries, {
             color: RSI_COLORS.line,
@@ -815,9 +852,10 @@ export const StockChartTab = React.memo(function StockChartTab({
             priceLineVisible: false,
             lastValueVisible: true,
         });
-        rsiSeries.setData(rsiT.map((time, i) => ({ time: (time + TIME_OFFSET) as UTCTimestamp, value: rsiV[i] })));
+        rsiSeries.setData(rsiT.map((time, i) => ({ time, value: rsiV[i] })));
+        rsiLineSeriesRef.current = rsiSeries;
 
-        // Overbought/Oversold lines (using baseline series approach with line series)
+        // Overbought/Oversold lines (removeNulls already adds TIME_OFFSET)
         const overboughtSeries = rsiChart.addSeries(LineSeries, {
             color: RSI_COLORS.upperBand,
             lineWidth: 1,
@@ -825,7 +863,8 @@ export const StockChartTab = React.memo(function StockChartTab({
             priceLineVisible: false,
             lastValueVisible: false,
         });
-        overboughtSeries.setData(rsiT.map((time) => ({ time: (time + TIME_OFFSET) as UTCTimestamp, value: RSI_LEVELS.overbought })));
+        overboughtSeries.setData(rsiT.map((time) => ({ time, value: RSI_LEVELS.overbought })));
+        rsiOverboughtRef.current = overboughtSeries;
 
         const oversoldSeries = rsiChart.addSeries(LineSeries, {
             color: RSI_COLORS.lowerBand,
@@ -834,7 +873,8 @@ export const StockChartTab = React.memo(function StockChartTab({
             priceLineVisible: false,
             lastValueVisible: false,
         });
-        oversoldSeries.setData(rsiT.map((time) => ({ time: (time + TIME_OFFSET) as UTCTimestamp, value: RSI_LEVELS.oversold })));
+        oversoldSeries.setData(rsiT.map((time) => ({ time, value: RSI_LEVELS.oversold })));
+        rsiOversoldRef.current = oversoldSeries;
 
         const middleSeries = rsiChart.addSeries(LineSeries, {
             color: RSI_COLORS.middleBand,
@@ -843,7 +883,8 @@ export const StockChartTab = React.memo(function StockChartTab({
             priceLineVisible: false,
             lastValueVisible: false,
         });
-        middleSeries.setData(rsiT.map((time) => ({ time: (time + TIME_OFFSET) as UTCTimestamp, value: RSI_LEVELS.middle })));
+        middleSeries.setData(rsiT.map((time) => ({ time, value: RSI_LEVELS.middle })));
+        rsiMiddleRef.current = middleSeries;
 
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
@@ -925,7 +966,7 @@ export const StockChartTab = React.memo(function StockChartTab({
                     <Dropdown
                         open={dropdownOpen}
                         onOpenChange={setDropdownOpen}
-                        dropdownRender={() => dropdownContent}
+                        popupRender={() => dropdownContent}
                         trigger={["click"]}
                         placement="bottomRight"
                     >
@@ -967,10 +1008,10 @@ export const StockChartTab = React.memo(function StockChartTab({
                         <div className="flex gap-4 items-center">
                             <span className="text-gray-500">{crosshairData.time}</span>
                             <span><span className="text-gray-400">O:</span> {crosshairData.open.toLocaleString()}</span>
-                            <span><span className="text-gray-400">H:</span> <span className="text-green-600">{crosshairData.high.toLocaleString()}</span></span>
-                            <span><span className="text-gray-400">L:</span> <span className="text-red-500">{crosshairData.low.toLocaleString()}</span></span>
+                            <span><span className="text-gray-400">H:</span> <span style={{ color: "var(--color-up)" }}>{crosshairData.high.toLocaleString()}</span></span>
+                            <span><span className="text-gray-400">L:</span> <span style={{ color: "var(--color-down)" }}>{crosshairData.low.toLocaleString()}</span></span>
                             <span><span className="text-gray-400">C:</span> {crosshairData.close.toLocaleString()}</span>
-                            <span className={crosshairData.change >= 0 ? "text-green-600" : "text-red-500"}>
+                            <span style={{ color: crosshairData.change >= 0 ? "var(--color-up)" : "var(--color-down)" }}>
                                 {crosshairData.change >= 0 ? "+" : ""}{crosshairData.change.toLocaleString()} ({crosshairData.changePercent >= 0 ? "+" : ""}{crosshairData.changePercent.toFixed(2)}%)
                             </span>
                             <span><span className="text-gray-400">Vol:</span> {(crosshairData.volume / 1000).toFixed(0)}K</span>

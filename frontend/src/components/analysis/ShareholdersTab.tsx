@@ -3,10 +3,8 @@
 import React, { useEffect, useRef } from "react";
 import { Card, Table, Spin, Typography, Tag, Empty, Row, Col } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { createChart } from "lightweight-charts";
 import { useShareholders, useShareholderSummary, useChartColors } from "@/hooks";
 import type { ShareholderDetail } from "@/types/company";
-import { AppColors } from "@/utils/theme";
 
 const { Text, Title } = Typography;
 
@@ -212,21 +210,21 @@ export const ShareholdersTab = React.memo(function ShareholdersTab({
                             <canvas ref={chartRef} width={280} height={280} />
                             <div className="flex gap-4 mt-2">
                                 <div className="flex items-center gap-1">
-                                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+                                    <div className="w-3 h-3 rounded-full bg-indigo-500" />
                                     <Text className="text-xs">
                                         Nước ngoài ({(parseFloat(summary.foreignerPercentage) * 100).toFixed(1)}%)
                                     </Text>
                                 </div>
                                 {parseFloat(summary.statePercentage) > 0 && (
                                     <div className="flex items-center gap-1">
-                                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                                        <div className="w-3 h-3 rounded-full bg-orange-500" />
                                         <Text className="text-xs">
                                             Nhà nước ({(parseFloat(summary.statePercentage) * 100).toFixed(1)}%)
                                         </Text>
                                     </div>
                                 )}
                                 <div className="flex items-center gap-1">
-                                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
                                     <Text className="text-xs">
                                         Khác ({(parseFloat(summary.otherPercentage) * 100).toFixed(1)}%)
                                     </Text>

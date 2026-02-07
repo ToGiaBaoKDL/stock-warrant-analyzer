@@ -13,11 +13,14 @@
  * - macd.ts: MACD (Moving Average Convergence Divergence)
  * - rsi.ts: RSI (Relative Strength Index)
  * - ichimoku.ts: Ichimoku Cloud (Ichimoku Kinko Hyo)
+ * - adx.ts: ADX (Average Directional Index) - Trend Strength
+ * - volume-confirmation.ts: RVOL and volume confirmation
+ * - funnel-signals.ts: 3-Layer Funnel Signal System
  * - utils.ts: Helper functions for data processing
  * 
  * Usage:
  * ```typescript
- * import { calculateSMA, calculateMACD, calculateRSI, calculateIchimoku } from "@/utils/indicators";
+ * import { calculateSMA, calculateMACD, calculateRSI, generateFunnelSignal } from "@/utils/indicators";
  * ```
  */
 
@@ -64,21 +67,46 @@ export {
     type IchimokuResult,
 } from "./ichimoku";
 
+// ADX (Average Directional Index) - NEW
+export {
+    calculateADX,
+    getADXStrength,
+    ADX_THRESHOLDS,
+    ADX_COLORS,
+    type ADXResult,
+} from "./adx";
+
+// Volume Confirmation (RVOL) - NEW
+export {
+    calculateRVOL,
+    calculateVolumeAverage,
+    getVolumeConfirmation,
+    checkVolumeDivergence,
+    getVolumeStrength,
+    RVOL_THRESHOLDS,
+    type VolumeConfirmation,
+} from "./volume-confirmation";
+
 // Utilities
 export {
     removeNulls,
 } from "./utils";
 
-// Trading Signals
+// Trading Signals - 3-Layer Funnel System
 export {
-    generateTradingSignal,
-    getRSISignal,
-    getMACDSignal,
-    getBollingerSignal,
-    getMATrendSignal,
-    getMomentumSignal,
-    SIGNAL_COLORS,
+    // Main function
+    generateFunnelSignal,
+    
+    // Types
     type SignalStrength,
+    type MarketRegime,
+    type StrategyType,
+    type MarketRegimeAnalysis,
+    type SetupAnalysis,
+    type ConfirmationAnalysis,
     type IndicatorSignal,
-    type TradingSignal,
-} from "./signals";
+    type FunnelSignal,
+    
+    // Constants
+    SIGNAL_COLORS,
+} from "./funnel-signals";

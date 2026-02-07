@@ -3,7 +3,6 @@
 import React from "react";
 import { getPriceColorHex } from "@/utils/priceColor";
 import { formatVND } from "@/utils/formatters";
-import { AppColors } from "@/utils/theme";
 
 // ============================================
 // Types
@@ -105,7 +104,6 @@ export const ProfitDisplay = React.memo(function ProfitDisplay({
     className = "",
 }: ProfitDisplayProps) {
     const isProfit = value > 0;
-    const colorClass = isProfit ? "!text-green-600" : value < 0 ? "!text-red-600" : "!text-gray-500";
 
     return (
         <span

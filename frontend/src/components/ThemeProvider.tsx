@@ -32,6 +32,7 @@ function AntDesignThemeSync({ children }: { children: React.ReactNode }) {
             colorError: AppColors.error,
             colorInfo: AppColors.info,
             fontFamily: "var(--font-inter)",
+            fontFamilyCode: "var(--font-inter), 'Inter', monospace",
             ...(isDark && {
                 colorBgBase: "#141414",
                 colorBgContainer: "#1f1f1f",

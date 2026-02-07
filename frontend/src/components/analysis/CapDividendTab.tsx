@@ -3,7 +3,6 @@
 import React, { useEffect, useRef } from "react";
 import { Card, Spin, Typography, Row, Col, Empty } from "antd";
 import { useCapDividend, useChartColors } from "@/hooks";
-import { AppColors } from "@/utils/theme";
 
 const { Text, Title } = Typography;
 
@@ -31,31 +30,7 @@ export const CapDividendTab = React.memo(function CapDividendTab({
     // Responsive canvas handling
     const [containerWidth, setContainerWidth] = React.useState(0);
 
-    // Use callback ref to ensure we capture the element when it mounts
-    const containerRef = React.useCallback((node: HTMLDivElement | null) => {
-        if (node !== null) {
-            // Initial measurement
-            if (node.clientWidth > 0) {
-                setContainerWidth(node.clientWidth);
-            }
-
-            const resizeObserver = new ResizeObserver((entries) => {
-                for (const entry of entries) {
-                    if (entry.contentRect && entry.contentRect.width > 0) {
-                        setContainerWidth(entry.contentRect.width);
-                    }
-                }
-            });
-
-            resizeObserver.observe(node);
-
-            // Cleanup function returned by callback ref? No, callback refs don't support cleanup this way easily
-            // We should store the observer in a ref to clean it up
-            // customized logic below
-        }
-    }, []);
-
-    // Better approach: combine ref and effect
+    // Use ref + effect for responsive canvas sizing
     const divRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

@@ -85,8 +85,8 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
                         <DollarOutlined className="text-xl" style={{ color: AppColors.primary }} />
                     </div>
                     <div>
-                        <Text className="!text-white font-bold text-base block">Phí giao dịch</Text>
-                        <Text className="!text-white text-xs">Tùy chỉnh theo CTCK của bạn</Text>
+                        <span className="text-white font-bold text-base block">Phí giao dịch</span>
+                        <span className="text-white text-xs">Tùy chỉnh theo CTCK của bạn</span>
                     </div>
                 </div>
                 {/* Custom Close Button */}

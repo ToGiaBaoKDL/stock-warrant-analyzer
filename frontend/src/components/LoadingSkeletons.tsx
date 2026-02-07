@@ -1,6 +1,6 @@
 "use client";
 
-import { Skeleton, Card, Row, Col, Space } from "antd";
+import { Skeleton, Card, Row, Col } from "antd";
 
 /**
  * Loading skeleton for price cards

@@ -2,10 +2,10 @@
 
 import React from "react";
 import { Card, Descriptions, Spin, Typography, Tag, Divider } from "antd";
-import { GlobalOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined, BankOutlined } from "@ant-design/icons";
+import { GlobalOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import { useCompanyProfile } from "@/hooks";
 
-const { Text, Paragraph, Title, Link } = Typography;
+const { Text, Title, Link } = Typography;
 
 // Industry color mapping for Vietnamese sectors
 const industryColors: Record<string, string> = {

@@ -1,6 +1,11 @@
 /**
  * Custom hook for trading signals data
  * 
+ * Uses the 3-Layer Funnel Signal System:
+ * - Layer 1: Market Regime (Uptrend/Downtrend/Sideway)
+ * - Layer 2: Setup (Trend Following vs Mean Reversion)
+ * - Layer 3: Volume Confirmation (RVOL)
+ * 
  * Optimized for performance:
  * - Uses same cache keys as homepage for stock data
  * - Memoizes signal calculations
@@ -10,7 +15,13 @@
 import { useMemo, useCallback } from "react";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { apiClient, endpoints } from "@/lib";
-import { generateTradingSignal, type TradingSignal, type SignalStrength } from "@/utils/indicators";
+import { 
+    generateFunnelSignal, 
+    type FunnelSignal, 
+    type SignalStrength,
+    type MarketRegime,
+    type StrategyType,
+} from "@/utils/indicators";
 import { getRefetchInterval } from "@/utils";
 import type { ChartHistoryResponse } from "@/hooks/useStockHistory";
 import type { StockItem, StockListResponse } from "@/types/api";
@@ -36,9 +47,22 @@ export interface StockSignalRow {
     change: number;
     changePercent: number;
     volume: number;
-    signal: TradingSignal | null;
+    
+    // New 3-Layer Funnel Signal
+    signal: FunnelSignal | null;
+    
+    // Quick access to layer results
+    marketRegime: MarketRegime | null;
+    strategy: StrategyType | null;
+    rvol: number | null;
+    
+    // Status
     isLoadingHistory: boolean;
     historyError: string | null;
+    
+    // Price position flags
+    isAtFloor: boolean;
+    isAtCeiling: boolean;
 }
 
 export interface SignalStats {
@@ -49,6 +73,12 @@ export interface SignalStats {
     sell: number;
     strongSell: number;
     loadingHistory: number;
+    
+    // New stats
+    uptrend: number;
+    downtrend: number;
+    sideway: number;
+    atFloor: number;
 }
 
 interface UseSignalsOptions {
@@ -75,6 +105,7 @@ interface UseSignalsResult {
 
 /**
  * Hook to fetch and calculate trading signals for stocks
+ * Uses the 3-Layer Funnel System for professional-grade signals
  */
 export function useSignals({ exchange }: UseSignalsOptions): UseSignalsResult {
     // Fetch stocks using same cache keys as homepage
@@ -121,7 +152,7 @@ export function useSignals({ exchange }: UseSignalsOptions): UseSignalsResult {
             queryKey: ["stock-history", stock.symbol, "1D", 120],
             queryFn: async () => {
                 const response = await apiClient.get<ChartHistoryResponse>(
-                    endpoints.market.history(stock.symbol, { resolution: "1D", days: 120 })
+                    endpoints.market.history(stock.symbol, { resolution: "1D", days: 350 })
                 );
                 return response.data;
             },
@@ -152,22 +183,32 @@ export function useSignals({ exchange }: UseSignalsOptions): UseSignalsResult {
         return map;
     }, [currentStocks, historyQueries]);
 
-    // Process data into table rows - memoized with signal calculation
+    // Process data into table rows - memoized with 3-Layer Funnel signal calculation
     const tableData = useMemo<StockSignalRow[]>(() => {
         return currentStocks.map((stock) => {
             const historyInfo = historyMap.get(stock.symbol);
             const historyData = historyInfo?.data;
 
-            let signal: TradingSignal | null = null;
+            let signal: FunnelSignal | null = null;
             
-            // Calculate signal if we have enough history data (50+ days)
+            // Check if at floor or ceiling
+            const isAtFloor = stock.current_price <= stock.floor;
+            const isAtCeiling = stock.current_price >= stock.ceiling;
+            
+            // Calculate signal if we have enough history data (50+ days for basic indicators)
+            // MA200 needs 200+ data points; with 300 days fetched, most stocks will qualify
+            // Chart history prices are in kVND (e.g. 25.0 = 25,000 VND)
+            // Stock floor/ceiling from API are in full VND (e.g. 23250)
+            // Must convert floor/ceiling to kVND to match chart data
             if (historyData?.c && historyData.c.length >= 50) {
                 try {
-                    signal = generateTradingSignal(
+                    signal = generateFunnelSignal(
                         historyData.c,
                         historyData.h,
                         historyData.l,
-                        historyData.v
+                        historyData.v,
+                        stock.floor > 0 ? stock.floor / 1000 : undefined,
+                        stock.ceiling > 0 ? stock.ceiling / 1000 : undefined,
                     );
                 } catch {
                     // Ignore calculation errors
@@ -187,8 +228,18 @@ export function useSignals({ exchange }: UseSignalsOptions): UseSignalsResult {
                 changePercent: stock.change_percent,
                 volume: stock.volume,
                 signal,
+                
+                // Quick access to layer results
+                marketRegime: signal?.layer1.regime ?? null,
+                strategy: signal?.layer2.strategy ?? null,
+                rvol: signal?.layer3.rvol ?? null,
+                
                 isLoadingHistory: historyInfo?.isLoading ?? true,
                 historyError: historyInfo?.error ?? null,
+                
+                // Price position flags
+                isAtFloor,
+                isAtCeiling,
             };
         });
     }, [currentStocks, historyMap]);
@@ -204,6 +255,16 @@ export function useSignals({ exchange }: UseSignalsOptions): UseSignalsResult {
             sell: withSignals.filter(r => r.signal?.overall === "SELL").length,
             strongSell: withSignals.filter(r => r.signal?.overall === "STRONG_SELL").length,
             loadingHistory: tableData.filter(r => r.isLoadingHistory).length,
+            
+            // New regime stats
+            uptrend: withSignals.filter(r => 
+                r.signal?.layer1.regime === "UPTREND_STRONG" || 
+                r.signal?.layer1.regime === "UPTREND_WEAK"
+            ).length,
+            downtrend: withSignals.filter(r => r.signal?.layer1.regime === "DOWNTREND").length,
+            sideway: withSignals.filter(r => r.signal?.layer1.regime === "SIDEWAY").length,
+            // Use signal regime (not API isAtFloor) for consistency with other regime stats
+            atFloor: withSignals.filter(r => r.signal?.layer1.regime === "FLOOR_PRICE").length,
         };
     }, [tableData]);
 

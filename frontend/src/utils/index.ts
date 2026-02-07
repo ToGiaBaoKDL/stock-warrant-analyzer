@@ -18,7 +18,6 @@ export {
 export { createFilterOption } from "./filterOption";
 export {
   isMarketOpen,
-  getPollingInterval,
   getRefetchInterval,
 } from "./tradingHours";
 export * from "./indicators";

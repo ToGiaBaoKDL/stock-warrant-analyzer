@@ -24,8 +24,13 @@ export const useChartColors = () => {
 
             // Area/Line
             lineColor: AppColors.primary,
-            topColor: 'rgba(59, 130, 246, 0.4)',
-            bottomColor: 'rgba(59, 130, 246, 0.0)',
+            areaTopColor: isDark ? 'rgba(204, 120, 92, 0.4)' : 'rgba(204, 120, 92, 0.4)',
+            areaBottomColor: isDark ? 'rgba(204, 120, 92, 0.0)' : 'rgba(204, 120, 92, 0.0)',
+
+            // Canvas chart colors (for donut/bar charts)
+            canvasLabel: isDark ? '#e5e7eb' : '#4b5563',
+            canvasGrid: isDark ? '#374151' : '#e5e7eb',
+            progressRail: isDark ? '#374151' : '#e8e8e8',
 
             // Spinner/Loading
             spinnerColor: AppColors.primary,
