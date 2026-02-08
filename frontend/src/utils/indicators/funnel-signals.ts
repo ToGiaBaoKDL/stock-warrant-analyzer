@@ -30,6 +30,10 @@ import { calculateBollingerBands } from "./bollinger";
 import { calculateSMA, calculateEMA } from "./ma";
 import { calculateADX, ADX_THRESHOLDS } from "./adx";
 import { calculateRVOL, getVolumeConfirmation, checkVolumeDivergence, RVOL_THRESHOLDS, type VolumeConfirmation } from "./volume-confirmation";
+import { calculateStochasticRSI, getStochRSIZone } from "./stochastic-rsi";
+import { calculateOBV, detectOBVDivergence, getOBVTrend } from "./obv";
+import { calculateATR, getVolatilityLevel } from "./atr";
+import { calculateIchimoku } from "./ichimoku";
 
 // ===================================================================
 // TYPES
@@ -128,13 +132,33 @@ interface IndicatorCache {
     percentB: number | null;
     deviationFromMA20: number;
     rvol: number | null;
+    // Stochastic RSI
+    stochRsiK: number | null;
+    stochRsiD: number | null;
+    stochRsiZone: "overbought" | "oversold" | "neutral" | null;
+    stochRsiCrossover: "bullish" | "bearish" | null;
+    // OBV
+    obvTrend: "accumulation" | "distribution" | "neutral";
+    obvDivergence: "bullish" | "bearish" | null;
+    // ATR
+    lastAtr: number | null;
+    atrPercent: number | null;
+    volatilityLevel: "very_high" | "high" | "moderate" | "low" | null;
+    // Ichimoku
+    ichimokuTrend: "above_cloud" | "below_cloud" | "inside_cloud" | null;
+    tenkanKijunCross: "bullish" | "bearish" | null;
 }
 
 /**
  * Compute all technical indicators ONCE and cache results.
  * Used by Layer 2, Layer 3, and indicator UI display.
  */
-function computeIndicators(closes: number[], volumes: number[]): IndicatorCache {
+function computeIndicators(
+    closes: number[],
+    highs: number[],
+    lows: number[],
+    volumes: number[]
+): IndicatorCache {
     const currentPrice = closes[closes.length - 1];
 
     // RSI
@@ -183,6 +207,77 @@ function computeIndicators(closes: number[], volumes: number[]): IndicatorCache 
     // RVOL
     const rvol = calculateRVOL(volumes, 20);
 
+    // ── Stochastic RSI ──
+    const stochRsi = calculateStochasticRSI(closes, 14, 14, 3, 3);
+    const stochRsiK = stochRsi.k.filter(v => v !== null).pop() as number | null;
+    const stochRsiD = stochRsi.d.filter(v => v !== null).pop() as number | null;
+    const stochRsiZone = getStochRSIZone(stochRsiK);
+
+    // Detect StochRSI crossover (%K vs %D)
+    let stochRsiCrossover: "bullish" | "bearish" | null = null;
+    const kArr = stochRsi.k;
+    const dArr = stochRsi.d;
+    if (kArr.length >= 2 && dArr.length >= 2) {
+        const k1 = kArr[kArr.length - 2];
+        const k0 = kArr[kArr.length - 1];
+        const d1 = dArr[dArr.length - 2];
+        const d0 = dArr[dArr.length - 1];
+        if (k1 !== null && k0 !== null && d1 !== null && d0 !== null) {
+            if (k1 <= d1 && k0 > d0 && k0 < 30) stochRsiCrossover = "bullish";
+            else if (k1 >= d1 && k0 < d0 && k0 > 70) stochRsiCrossover = "bearish";
+        }
+    }
+
+    // ── OBV ──
+    const obvResult = calculateOBV(closes, volumes, 20);
+    const obvTrend = getOBVTrend(obvResult.obv, 20);
+    const obvDivergence = detectOBVDivergence(closes, obvResult.obv, 14);
+
+    // ── ATR ──
+    const atrResult = calculateATR(highs, lows, closes, 14);
+    const lastAtr = atrResult.atr.filter(v => v !== null).pop() as number | null;
+    const lastAtrPercent = atrResult.atrPercent.filter(v => v !== null).pop() as number | null;
+    const volatilityLevel = lastAtrPercent !== null ? getVolatilityLevel(lastAtrPercent) : null;
+
+    // ── Ichimoku Cloud ──
+    const ichimoku = calculateIchimoku(highs, lows, closes, 9, 26, 52, 26);
+    let ichimokuTrend: "above_cloud" | "below_cloud" | "inside_cloud" | null = null;
+    let tenkanKijunCross: "bullish" | "bearish" | null = null;
+
+    // Price vs Cloud at the current bar
+    // Senkou spans are displaced forward by 26, so current cloud uses index = current + 26
+    // But for real-time, we use the cloud values at the current length position
+    const len = closes.length;
+    if (len > 0) {
+        // The cloud at current bar corresponds to senkouSpanA/B at index = len - 1 + 26
+        // which was calculated from data at index = len - 1 - 0 (displacement shifts it forward)
+        // Actually: senkouSpanA[i] corresponds to data from i - displacement
+        // For current price comparison, we want the cloud that overlaps with today:
+        // That's senkouSpanA[len-1] and senkouSpanB[len-1]
+        const spanA = ichimoku.senkouSpanA[len - 1] ?? null;
+        const spanB = ichimoku.senkouSpanB[len - 1] ?? null;
+
+        if (spanA !== null && spanB !== null) {
+            const cloudTop = Math.max(spanA, spanB);
+            const cloudBottom = Math.min(spanA, spanB);
+            if (currentPrice > cloudTop) ichimokuTrend = "above_cloud";
+            else if (currentPrice < cloudBottom) ichimokuTrend = "below_cloud";
+            else ichimokuTrend = "inside_cloud";
+        }
+
+        // Tenkan-Kijun cross detection (last 2 bars)
+        if (len >= 2) {
+            const tk0 = ichimoku.tenkanSen[len - 1];
+            const tk1 = ichimoku.tenkanSen[len - 2];
+            const kj0 = ichimoku.kijunSen[len - 1];
+            const kj1 = ichimoku.kijunSen[len - 2];
+            if (tk0 !== null && tk1 !== null && kj0 !== null && kj1 !== null) {
+                if (tk1 <= kj1 && tk0 > kj0) tenkanKijunCross = "bullish";
+                else if (tk1 >= kj1 && tk0 < kj0) tenkanKijunCross = "bearish";
+            }
+        }
+    }
+
     return {
         lastRsi,
         lastHist,
@@ -197,6 +292,17 @@ function computeIndicators(closes: number[], volumes: number[]): IndicatorCache 
         percentB,
         deviationFromMA20,
         rvol,
+        stochRsiK,
+        stochRsiD,
+        stochRsiZone,
+        stochRsiCrossover,
+        obvTrend,
+        obvDivergence,
+        lastAtr,
+        atrPercent: lastAtrPercent,
+        volatilityLevel,
+        ichimokuTrend,
+        tenkanKijunCross,
     };
 }
 
@@ -551,6 +657,95 @@ function buildIndicatorSignals(ic: IndicatorCache): IndicatorSignal[] {
         });
     }
 
+    // Stochastic RSI
+    if (ic.stochRsiK !== null) {
+        let stochSignal: "bullish" | "bearish" | "neutral" = "neutral";
+        if (ic.stochRsiCrossover === "bullish") stochSignal = "bullish";
+        else if (ic.stochRsiCrossover === "bearish") stochSignal = "bearish";
+        else if (ic.stochRsiZone === "oversold") stochSignal = "bullish";
+        else if (ic.stochRsiZone === "overbought") stochSignal = "bearish";
+
+        const crossLabel = ic.stochRsiCrossover
+            ? (ic.stochRsiCrossover === "bullish" ? " ↑ Cross" : " ↓ Cross")
+            : "";
+        signals.push({
+            indicator: "StochRSI",
+            signal: stochSignal,
+            reason: `%K = ${ic.stochRsiK.toFixed(0)}, %D = ${ic.stochRsiD?.toFixed(0) ?? "N/A"}${crossLabel}`,
+            value: `${ic.stochRsiK.toFixed(0)}`,
+        });
+    }
+
+    // OBV
+    {
+        let obvSignal: "bullish" | "bearish" | "neutral" = "neutral";
+        if (ic.obvDivergence === "bullish" || ic.obvTrend === "accumulation") obvSignal = "bullish";
+        else if (ic.obvDivergence === "bearish" || ic.obvTrend === "distribution") obvSignal = "bearish";
+
+        const trendLabel: Record<string, string> = {
+            accumulation: "Tích lũy",
+            distribution: "Phân phối",
+            neutral: "Trung lập",
+        };
+        const divLabel = ic.obvDivergence
+            ? (ic.obvDivergence === "bullish" ? " | PK tăng" : " | PK giảm")
+            : "";
+        signals.push({
+            indicator: "OBV",
+            signal: obvSignal,
+            reason: `${trendLabel[ic.obvTrend]}${divLabel}`,
+            value: trendLabel[ic.obvTrend],
+        });
+    }
+
+    // ATR (Volatility)
+    if (ic.lastAtr !== null && ic.atrPercent !== null) {
+        // ATR is not directional -  use volatility level to hint about risk
+        const volSignal: "bullish" | "bearish" | "neutral" =
+            ic.volatilityLevel === "very_high" ? "bearish" :
+            ic.volatilityLevel === "high" ? "bearish" :
+            ic.volatilityLevel === "low" ? "bullish" : "neutral";
+
+        const volLabel: Record<string, string> = {
+            very_high: "Rất cao",
+            high: "Cao",
+            moderate: "Trung bình",
+            low: "Thấp",
+        };
+        signals.push({
+            indicator: "ATR",
+            signal: volSignal,
+            reason: `ATR = ${ic.lastAtr.toFixed(0)} (${ic.atrPercent.toFixed(1)}%) -  Biến động: ${volLabel[ic.volatilityLevel ?? "moderate"]}`,
+            value: `${ic.atrPercent.toFixed(1)}%`,
+        });
+    }
+
+    // Ichimoku Cloud
+    if (ic.ichimokuTrend !== null) {
+        let ichSignal: "bullish" | "bearish" | "neutral" = "neutral";
+        if (ic.ichimokuTrend === "above_cloud") ichSignal = "bullish";
+        else if (ic.ichimokuTrend === "below_cloud") ichSignal = "bearish";
+
+        // Tenkan-Kijun cross can upgrade
+        if (ic.tenkanKijunCross === "bullish") ichSignal = "bullish";
+        else if (ic.tenkanKijunCross === "bearish") ichSignal = "bearish";
+
+        const trendLabel: Record<string, string> = {
+            above_cloud: "Trên mây",
+            below_cloud: "Dưới mây",
+            inside_cloud: "Trong mây",
+        };
+        const crossLabel = ic.tenkanKijunCross
+            ? (ic.tenkanKijunCross === "bullish" ? " | TK Cross ↑" : " | TK Cross ↓")
+            : "";
+        signals.push({
+            indicator: "Ichimoku",
+            signal: ichSignal,
+            reason: `${trendLabel[ic.ichimokuTrend]}${crossLabel}`,
+            value: trendLabel[ic.ichimokuTrend],
+        });
+    }
+
     return signals;
 }
 
@@ -606,7 +801,7 @@ export function generateFunnelSignal(
     const layer1 = analyzeMarketRegime(closes, highs, lows, floor);
 
     // Compute all technical indicators ONCE
-    const ic = computeIndicators(closes, volumes);
+    const ic = computeIndicators(closes, highs, lows, volumes);
 
     // Layer 2: Setup Detection
     const layer2 = analyzeSetup(closes, layer1.regime, ic);
@@ -615,7 +810,21 @@ export function generateFunnelSignal(
     const layer3 = analyzeConfirmation(closes, volumes, layer2.confidence);
 
     // Final Decision
-    const { overall, actionable } = determineOverall(layer1.regime, layer2, layer3);
+    let { overall, actionable } = determineOverall(layer1.regime, layer2, layer3);
+
+    // ── Zero-volume / bad-data gate ──
+    // Stocks/warrants with zero, missing, or invalid volume cannot be actionable.
+    // Force NEUTRAL regardless of technical setup -  no liquidity = no trade.
+    const currentVolume = volumes[volumes.length - 1];
+    const hasNoVolume = currentVolume == null || !isFinite(currentVolume) || currentVolume <= 0;
+    const hasInvalidRvol = layer3.rvol == null || !isFinite(layer3.rvol);
+    if (hasNoVolume || hasInvalidRvol) {
+        overall = "NEUTRAL";
+        actionable = false;
+        layer3.reason = hasNoVolume
+            ? "Không có dữ liệu khối lượng -  Không thể giao dịch"
+            : "Không thể tính RVOL -  Dữ liệu volume không hợp lệ";
+    }
 
     // Indicator detail for UI (reuses precomputed cache)
     const indicators = buildIndicatorSignals(ic);

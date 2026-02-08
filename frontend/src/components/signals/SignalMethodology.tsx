@@ -59,24 +59,35 @@ const InfoBox = ({
 };
 
 const RuleList = ({ items }: { items: { condition: string; result: string; color?: "green" | "red" }[] }) => {
-    const { token } = useToken();
-    return (
-        <ul className="mt-2 space-y-1.5 ml-4 text-sm" style={{ color: token.colorTextSecondary }}>
-            {items.map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
-                    <Text code className="text-xs whitespace-nowrap">{item.condition}</Text>
-                    <span>&rarr;</span>
-                    <Text style={{
-                        color: item.color === "green" ? token.colorSuccess
-                            : item.color === "red" ? token.colorError
-                            : token.colorTextSecondary
-                    }}>
-                        {item.result}
-                    </Text>
-                </li>
-            ))}
-        </ul>
-    );
+  const { token } = useToken();
+
+  return (
+        <ul className="mt-2 ml-4 space-y-1.5 text-sm" style={{ color: token.colorTextSecondary }}>
+      {items.map((it, i) => (
+        <li key={i} className="flex items-start gap-2">
+          <code className="text-xs whitespace-nowrap rounded px-1.5 py-0.5"
+            style={{
+                            color: token.colorText,
+              background: token.colorFillQuaternary,
+              border: `1px solid ${token.colorBorderSecondary}`,
+              fontFamily: "var(--font-inter), 'Inter', monospace",
+            }}>
+            {it.condition}
+          </code>
+                    <span style={{ color: token.colorTextSecondary }}>→</span>
+          <span style={{
+            color: it.color === "green"
+              ? token.colorSuccess
+              : it.color === "red"
+                ? token.colorError
+                                : token.colorText,
+          }}>
+            {it.result}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
 };
 
 export const SignalMethodology = React.memo(function SignalMethodology() {
@@ -107,12 +118,12 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
                                         key: "overview",
                                         label: <Text strong>Tổng Quan Hệ Thống</Text>,
                                         children: (
-                                            <Space direction="vertical" className="w-full" size="middle">
-                                                <Text style={{ color: token.colorTextSecondary }}>
-                                                    Hệ thống sử dụng <Text strong>pipeline 3 lớp lọc</Text> để loại bỏ
+                                            <Space orientation="vertical" className="w-full" size="middle">
+                                                <span style={{ color: token.colorTextSecondary }}>
+                                                    Hệ thống sử dụng <strong style={{ color: token.colorText }}>pipeline 3 lớp lọc</strong> để loại bỏ
                                                     tín hiệu nhiễu và false positive. Tín hiệu phải vượt qua cả 3 lớp
                                                     mới được xem là đáng tin cậy.
-                                                </Text>
+                                                </span>
 
                                                 <CodeBlock>
                                                     <div style={{ color: token.colorText }}>
@@ -140,13 +151,13 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
                                                         {([
                                                             { tag: "STRONG BUY", color: SIGNAL_COLORS.STRONG_BUY, desc: "Confidence strong + Volume xác nhận + Uptrend hoặc Sideway" },
                                                             { tag: "BUY", color: SIGNAL_COLORS.BUY, desc: "Confidence strong (chưa volume), hoặc moderate + volume xác nhận" },
-                                                            { tag: "NEUTRAL", color: SIGNAL_COLORS.NEUTRAL, desc: "Không có setup, volume yếu, vi phạm Golden Rule, hoặc nằm sàn" },
+                                                            { tag: "NEUTRAL", color: SIGNAL_COLORS.NEUTRAL, desc: "Không có setup, volume yếu/bằng 0, vi phạm Golden Rule, hoặc nằm sàn" },
                                                             { tag: "SELL", color: SIGNAL_COLORS.SELL, desc: "Mean Reversion SELL trong Downtrend/Sideway" },
                                                             { tag: "STRONG SELL", color: SIGNAL_COLORS.STRONG_SELL, desc: "SELL strong + Volume xác nhận + Downtrend/Sideway" },
                                                         ] as const).map(({ tag, color, desc }) => (
                                                             <div key={tag} className="flex items-center gap-2">
                                                                 <Tag style={{ borderColor: color, color }} className="m-0">{tag}</Tag>
-                                                                <Text>{desc}</Text>
+                                                                <span style={{ color: token.colorTextSecondary }}>{desc}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -154,11 +165,15 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
 
                                                 <InfoBox type="warning">
                                                     <Text style={{ color: token.colorWarning }}>
-                                                        <strong>Golden Rules:</strong> Uptrend chỉ tìm MUA (tín hiệu bán = NEUTRAL).
-                                                        Downtrend: BUY chỉ khi Mean Reversion strong + volume xác nhận.
-                                                        Nằm Sàn: BUY chỉ khi Mean Reversion strong + volume xác nhận.
-                                                        Không SELL ở Sàn hoặc Uptrend.
+                                                        <strong>Golden Rules:</strong>
                                                     </Text>
+
+                                                    <ul className="mt-1 ml-4 list-disc text-sm" style={{ color: token.colorWarning }}>
+                                                        <li>Uptrend: chỉ tìm <strong>MUA</strong> (tín hiệu bán = NEUTRAL)</li>
+                                                        <li>Downtrend: BUY chỉ khi <strong>Mean Reversion strong</strong> + volume xác nhận</li>
+                                                        <li>Nằm Sàn: BUY chỉ khi <strong>Mean Reversion strong</strong> + volume xác nhận</li>
+                                                        <li>Không <strong>SELL</strong> ở Sàn hoặc Uptrend</li>
+                                                    </ul>
                                                 </InfoBox>
                                             </Space>
                                         ),
@@ -172,7 +187,7 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
                                             </Space>
                                         ),
                                         children: (
-                                            <Space direction="vertical" className="w-full" size="small">
+                                            <Space orientation="vertical" className="w-full" size="small">
                                                 <Text style={{ color: token.colorTextSecondary }} className="text-sm">
                                                     Xác định &quot;luật chơi&quot; TRƯỚC KHI phân tích tín hiệu. Dùng EMA50, MA200, ADX.
                                                 </Text>
@@ -211,12 +226,15 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
                                             </Space>
                                         ),
                                         children: (
-                                            <Space direction="vertical" className="w-full" size="small">
-                                                <Text style={{ color: token.colorTextSecondary }} className="text-sm">
+                                            <Space orientation="vertical" className="w-full" size="small">
+                                                <span style={{ color: token.colorTextSecondary }} className="text-sm">
                                                     Chọn chiến thuật dựa trên Market Regime. Mỗi regime có logic riêng.
-                                                    Layer 2 trả về <Text code>direction</Text> (BUY/SELL/NONE) và{" "}
-                                                    <Text code>confidence</Text> (strong/moderate/weak).
-                                                </Text>
+                                                    Layer 2 trả về{" "}
+                                                    <code className="rounded px-1 py-0.5 text-xs" style={{ color: token.colorTextSecondary, background: token.colorFillQuaternary, border: `1px solid ${token.colorBorderSecondary}` }}>direction</code>
+                                                    {" "}(BUY/SELL/NONE) và{" "}
+                                                    <code className="rounded px-1 py-0.5 text-xs" style={{ color: token.colorTextSecondary, background: token.colorFillQuaternary, border: `1px solid ${token.colorBorderSecondary}` }}>confidence</code>
+                                                    {" "}(strong/moderate/weak).
+                                                </span>
 
                                                 <div>
                                                     <Text strong style={{ color: token.colorPrimary }}>A. Trend Following (Đánh theo xu hướng)</Text>
@@ -257,7 +275,7 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
                                             </Space>
                                         ),
                                         children: (
-                                            <Space direction="vertical" className="w-full" size="small">
+                                            <Space orientation="vertical" className="w-full" size="small">
                                                 <Text style={{ color: token.colorTextSecondary }} className="text-sm">
                                                     Xác nhận dòng tiền thông minh (Smart Money). Tín hiệu kỹ thuật
                                                     KHÔNG CÓ volume xác nhận chỉ là nhiễu.
@@ -297,7 +315,7 @@ export const SignalMethodology = React.memo(function SignalMethodology() {
                                             <Text strong style={{ color: token.colorWarning }}>Lưu Ý Quan Trọng</Text>
                                         ),
                                         children: (
-                                            <Space direction="vertical" className="w-full" size="middle">
+                                            <Space orientation="vertical" className="w-full" size="middle">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <InfoBox type="success">
                                                         <div className="flex items-start gap-2">

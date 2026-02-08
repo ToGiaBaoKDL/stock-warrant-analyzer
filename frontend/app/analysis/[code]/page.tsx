@@ -38,7 +38,7 @@ import {
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { useStockPrice, useWarrantInfo, useWarrantsByUnderlying, useStockList, useWarrantList } from "@/hooks";
+import { useStockPrice, useWarrantInfo, useWarrantsByUnderlying, useStockList, useWarrantList, useStockHistory } from "@/hooks";
 import { useStockStore, useWarrantStore } from "@/stores";
 import { StockDetailSkeleton, MainNav, FeeSettingsButton, useScenarioColumns } from "@/components";
 import type { ScenarioRow } from "@/types";
@@ -59,6 +59,8 @@ import {
   LeadershipTab,
   ShareholdersTab,
   CapDividendTab,
+  SignalSummaryRow,
+  PriceTargetPanel,
 } from "@/components/analysis";
 
 const { Content } = Layout;
@@ -124,6 +126,12 @@ export default function AnalysisPage() {
 
   // Fetch ALL warrants for selector
   const { data: allWarrantsData } = useWarrantList();
+
+  // Fetch 350-day daily history for signal computation (reuses same cache as signal page)
+  const { data: historyData, isLoading: historyLoading } = useStockHistory(symbolCode, {
+    resolution: "1D",
+    days: 350,
+  });
 
   const [newSellPrice, setNewSellPrice] = useState<number | null>(null);
 
@@ -397,6 +405,7 @@ export default function AnalysisPage() {
             placeholder="Chọn mã CP/CW..."
             className="w-72"
             suffixIcon={<SearchOutlined className="text-gray-400" />}
+            optionFilterProp="searchText"
             filterOption={(input, option) => {
               const search = input.toUpperCase();
               const value = option?.value as string | undefined;
@@ -474,6 +483,7 @@ export default function AnalysisPage() {
           placeholder="Chọn mã khác"
           className="w-72"
           suffixIcon={<SearchOutlined className="text-gray-400" />}
+          optionFilterProp="searchText"
           filterOption={(input, option) => {
             const search = input.toUpperCase();
             const value = option?.value as string | undefined;
@@ -570,6 +580,43 @@ export default function AnalysisPage() {
               </Card>
             </Col>
           </Row>
+
+          {/* Signal Summary Row */}
+          <SignalSummaryRow
+            closes={historyData?.c ?? []}
+            highs={historyData?.h ?? []}
+            lows={historyData?.l ?? []}
+            volumes={historyData?.v ?? []}
+            floor={
+              isWarrant
+                ? undefined
+                : stockData?.floor && stockData.floor > 0
+                  ? stockData.floor / 1000
+                  : undefined
+            }
+            ceiling={
+              isWarrant
+                ? undefined
+                : stockData?.ceiling && stockData.ceiling > 0
+                  ? stockData.ceiling / 1000
+                  : undefined
+            }
+            isLoading={historyLoading}
+          />
+
+          {/* Price Target Panel (Support/Resistance) */}
+          {!isWarrant && historyData?.c && historyData.c.length >= 10 && (
+            <PriceTargetPanel
+              highs={historyData.h}
+              lows={historyData.l}
+              closes={historyData.c}
+              currentPrice={
+                stockData?.current_price
+                  ? stockData.current_price / 1000
+                  : undefined
+              }
+            />
+          )}
 
           {/* Position & What-if Combined */}
           <Card

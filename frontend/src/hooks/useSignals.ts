@@ -17,10 +17,12 @@ import { useQuery, useQueries } from "@tanstack/react-query";
 import { apiClient, endpoints } from "@/lib";
 import { 
     generateFunnelSignal, 
+    computeEnhancedSignals,
     type FunnelSignal, 
     type SignalStrength,
     type MarketRegime,
     type StrategyType,
+    type EnhancedSignalData,
 } from "@/utils/indicators";
 import { getRefetchInterval } from "@/utils";
 import type { ChartHistoryResponse } from "@/hooks/useStockHistory";
@@ -50,6 +52,9 @@ export interface StockSignalRow {
     
     // New 3-Layer Funnel Signal
     signal: FunnelSignal | null;
+    
+    // Enhanced signal features (6 pro features)
+    enhanced: EnhancedSignalData | null;
     
     // Quick access to layer results
     marketRegime: MarketRegime | null;
@@ -216,6 +221,38 @@ export function useSignals({ exchange }: UseSignalsOptions): UseSignalsResult {
                 }
             }
 
+            // Compute enhanced signal features if base signal exists
+            let enhanced: EnhancedSignalData | null = null;
+            if (signal && historyData?.c && historyData.c.length >= 50) {
+                try {
+                    enhanced = computeEnhancedSignals(
+                        historyData.c,
+                        historyData.h,
+                        historyData.l,
+                        historyData.v,
+                        signal,
+                    );
+                } catch {
+                    // Ignore enhancement errors
+                }
+            }
+
+            // Real-time volume gate: if the stock list API reports zero volume today,
+            // the stock is likely suspended or pre-market. Override to NEUTRAL
+            // regardless of what historical data shows.
+            if (signal && stock.volume <= 0) {
+                signal = {
+                    ...signal,
+                    overall: "NEUTRAL",
+                    actionable: false,
+                    layer3: {
+                        ...signal.layer3,
+                        reason: "KL giao dịch phiên hiện tại = 0 -  Không có thanh khoản",
+                    },
+                    summary: signal.summary.replace(/^[^\n]+/, "TRUNG LẬP (KL = 0)"),
+                };
+            }
+
             return {
                 key: stock.symbol,
                 symbol: stock.symbol,
@@ -229,6 +266,7 @@ export function useSignals({ exchange }: UseSignalsOptions): UseSignalsResult {
                 changePercent: stock.change_percent,
                 volume: stock.volume,
                 signal,
+                enhanced,
                 
                 // Quick access to layer results
                 marketRegime: signal?.layer1.regime ?? null,

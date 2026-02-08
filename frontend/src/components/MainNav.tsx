@@ -11,7 +11,8 @@ import {
     FilterOutlined,
     CalculatorOutlined,
     FireOutlined,
-    SignalFilled
+    SignalFilled,
+    ExperimentOutlined,
 } from "@ant-design/icons";
 
 const { Header } = Layout;
@@ -21,6 +22,7 @@ const navItems = [
     { href: "/", label: "Tổng quan", icon: <HomeOutlined /> },
     { href: "/warrants", label: "CW Screener", icon: <FilterOutlined /> },
     { href: "/signals", label: "Tín Hiệu Mua", icon: <SignalFilled /> },
+    { href: "/backtest", label: "Backtest", icon: <ExperimentOutlined /> },
     { href: "/analysis", label: "What-if", icon: <CalculatorOutlined /> },
 ];
 

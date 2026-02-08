@@ -23,6 +23,11 @@ import {
     PauseCircleOutlined,
     StopOutlined,
     FireOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    ClockCircleOutlined,
+    SafetyCertificateOutlined,
+    AimOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { 
@@ -31,11 +36,18 @@ import {
     type MarketRegime, 
     type StrategyType,
     type IndicatorSignal,
+    type EnhancedSignalData,
 } from "@/utils/indicators";
 import { getPricePosition, getPositionColorHex, getPriceColorHex } from "@/utils/priceColor";
 import type { StockSignalRow } from "@/hooks/useSignals";
 
 const { Text } = Typography;
+
+const HeaderWithTip = ({ label, tip }: { label: string; tip: string }) => (
+    <Tooltip title={tip}>
+        <span>{label}</span>
+    </Tooltip>
+);
 
 // ===========================================
 // Memoized Sub-Components
@@ -260,7 +272,7 @@ export const RvolBadge = memo(function RvolBadge({
 export function createSignalColumns(): ColumnsType<StockSignalRow> {
     return [
         {
-            title: "Mã CK",
+            title: <HeaderWithTip label="Mã CK" tip="Mã chứng khoán" />,
             dataIndex: "symbol",
             key: "symbol",
             width: 80,
@@ -276,7 +288,7 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             ),
         },
         {
-            title: "Giá",
+            title: <HeaderWithTip label="Giá" tip="Giá hiện tại (nghìn VND)" />,
             dataIndex: "price",
             key: "price",
             width: 75,
@@ -292,7 +304,7 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             },
         },
         {
-            title: "+/-",
+            title: <HeaderWithTip label={"+/-"} tip="% thay đổi so với tham chiếu" />,
             key: "change",
             width: 80,
             align: "right",
@@ -312,7 +324,7 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             },
         },
         {
-            title: "KL",
+            title: <HeaderWithTip label="KL" tip="Khối lượng giao dịch (nghìn)" />,
             dataIndex: "volume",
             key: "volume",
             width: 70,
@@ -324,9 +336,9 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             ),
         },
         {
-            title: "Tín Hiệu",
+            title: <HeaderWithTip label="Tín Hiệu" tip="Tín hiệu tổng hợp 3 lớp" />,
             key: "signal",
-            width: 110,
+            width: 115,
             align: "center",
             filters: [
                 { text: "MUA MẠNH", value: "STRONG_BUY" },
@@ -370,9 +382,9 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             },
         },
         {
-            title: "Xu Hướng",
+            title: <HeaderWithTip label="Xu Hướng" tip="Regime thị trường (Trend/Sideway)" />,
             key: "regime",
-            width: 85,
+            width: 95,
             align: "center",
             filters: [
                 { text: "Uptrend Mạnh", value: "UPTREND_STRONG" },
@@ -395,9 +407,9 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             },
         },
         {
-            title: "Chiến Thuật",
+            title: <HeaderWithTip label="Chiến Thuật" tip="Setup chiến thuật (Trend/Mean Rev)" />,
             key: "strategy",
-            width: 85,
+            width: 100,
             align: "center",
             filters: [
                 { text: "Trend Following", value: "TREND_FOLLOWING" },
@@ -418,7 +430,7 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             },
         },
         {
-            title: "RVOL",
+            title: <HeaderWithTip label="RVOL" tip="Relative Volume 20 phiên" />,
             key: "rvol",
             width: 65,
             align: "center",
@@ -435,7 +447,7 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
         },
 
         {
-            title: "RSI",
+            title: <HeaderWithTip label="RSI" tip="Trạng thái RSI" />,
             key: "rsi",
             width: 40,
             align: "center",
@@ -446,7 +458,7 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             },
         },
         {
-            title: "MACD",
+            title: <HeaderWithTip label="MACD" tip="Trạng thái MACD" />,
             key: "macd",
             width: 40,
             align: "center",
@@ -457,7 +469,7 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             },
         },
         {
-            title: "BB",
+            title: <HeaderWithTip label="BB" tip="Trạng thái Bollinger Bands" />,
             key: "bb",
             width: 40,
             align: "center",
@@ -468,6 +480,195 @@ export function createSignalColumns(): ColumnsType<StockSignalRow> {
             },
         },
 
+        // ===== Enhanced Signal Columns =====
+        {
+            title: <HeaderWithTip label="MTF" tip="Đồng thuận đa khung thời gian" />,
+            key: "mtf",
+            width: 45,
+            align: "center",
+            render: (_, record) => {
+                const mtf = record.enhanced?.multiTimeframe;
+                if (!mtf) return <Tag color="default">-</Tag>;
+                const color = mtf.isAligned ? "green" : mtf.confidenceAdjust === -1 ? "red" : "default";
+                const icon = mtf.isAligned ? <CheckCircleOutlined /> : mtf.confidenceAdjust === -1 ? <CloseCircleOutlined /> : <MinusOutlined />;
+                return (
+                    <Tooltip title={
+                        <div className="text-xs">
+                            <div className="font-semibold">Multi-Timeframe</div>
+                            <div>{mtf.reason}</div>
+                        </div>
+                    }>
+                        <Tag color={color} icon={icon} className="text-xs px-1 py-0 cursor-help">
+                            {mtf.isAligned ? "✓" : "✗"}
+                        </Tag>
+                    </Tooltip>
+                );
+            },
+        },
+        {
+            title: <HeaderWithTip label="PK" tip="Phân kỳ RSI/MACD" />,
+            key: "divergence",
+            width: 55,
+            align: "center",
+            filters: [
+                { text: "PK Tăng", value: "bullish" },
+                { text: "PK Giảm", value: "bearish" },
+                { text: "Không PK", value: "none" },
+            ],
+            onFilter: (value, record) => {
+                if (value === "none") return !record.enhanced?.divergence?.hasDivergence;
+                return record.enhanced?.divergence?.strongest === value;
+            },
+            render: (_, record) => {
+                const div = record.enhanced?.divergence;
+                if (!div || !div.hasDivergence) return <Tag color="default">-</Tag>;
+                const color = div.strongest === "bullish" ? "green" : "red";
+                const label = div.strongest === "bullish" ? "Tăng" : "Giảm";
+                return (
+                    <Tooltip title={
+                        <div className="text-xs">
+                            <div className="font-semibold">Phân Kỳ</div>
+                            <div>{div.reason}</div>
+                        </div>
+                    }>
+                        <Tag color={color} className="text-xs px-1 py-0 cursor-help font-semibold">
+                            {label}
+                        </Tag>
+                    </Tooltip>
+                );
+            },
+        },
+        {
+            title: <HeaderWithTip label="S/R" tip="Vị trí hỗ trợ/kháng cự" />,
+            key: "sr",
+            width: 60,
+            align: "center",
+            filters: [
+                { text: "Gần hỗ trợ", value: "near_support" },
+                { text: "Gần kháng cự", value: "near_resistance" },
+                { text: "Giữa vùng", value: "mid_range" },
+            ],
+            onFilter: (value, record) => record.enhanced?.srProximity?.zone === value,
+            sorter: (a, b) => (a.enhanced?.srProximity?.riskReward ?? 0) - (b.enhanced?.srProximity?.riskReward ?? 0),
+            render: (_, record) => {
+                const sr = record.enhanced?.srProximity;
+                if (!sr) return <Tag color="default">-</Tag>;
+                const color = sr.zone === "near_support" ? "green" 
+                    : sr.zone === "near_resistance" ? "red" 
+                    : sr.zone === "mid_range" ? "blue" 
+                    : "default";
+                const zoneShort: Record<string, string> = {
+                    near_support: "HT",
+                    near_resistance: "KC",
+                    mid_range: "Giữa",
+                    above_all: "Trên",
+                    below_all: "Dưới",
+                };
+                return (
+                    <Tooltip title={
+                        <div className="text-xs">
+                            <div className="font-semibold">Hỗ Trợ / Kháng Cự</div>
+                            <div>{sr.reason}</div>
+                            <div className="mt-1">Hỗ trợ: {sr.nearestSupport.toFixed(2)}</div>
+                            <div>Kháng cự: {sr.nearestResistance.toFixed(2)}</div>
+                        </div>
+                    }>
+                        <Tag color={color} icon={<AimOutlined />} className="text-xs px-1 py-0 cursor-help">
+                            {zoneShort[sr.zone] ?? sr.zone}
+                        </Tag>
+                    </Tooltip>
+                );
+            },
+        },
+        {
+            title: <HeaderWithTip label="Tuổi" tip="Độ tươi tín hiệu" />,
+            key: "age",
+            width: 50,
+            align: "center",
+            sorter: (a, b) => (a.enhanced?.signalAging?.freshness ?? 0) - (b.enhanced?.signalAging?.freshness ?? 0),
+            render: (_, record) => {
+                const age = record.enhanced?.signalAging;
+                if (!age) return <Tag color="default">-</Tag>;
+                const color = age.label === "fresh" ? "green" 
+                    : age.label === "recent" ? "lime" 
+                    : age.label === "aging" ? "orange" 
+                    : "red";
+                return (
+                    <Tooltip title={
+                        <div className="text-xs">
+                            <div className="font-semibold">Tuổi Tín Hiệu</div>
+                            <div>{age.reason}</div>
+                        </div>
+                    }>
+                        <Tag color={color} icon={<ClockCircleOutlined />} className="text-xs px-1 py-0 cursor-help">
+                            {age.freshness}%
+                        </Tag>
+                    </Tooltip>
+                );
+            },
+        },
+        {
+            title: <HeaderWithTip label="Điểm" tip="Điểm rủi ro/hiệu quả" />,
+            key: "score",
+            width: 55,
+            align: "center",
+            sorter: (a, b) => (a.enhanced?.riskRanking?.score ?? 0) - (b.enhanced?.riskRanking?.score ?? 0),
+            defaultSortOrder: "descend",
+            render: (_, record) => {
+                const rank = record.enhanced?.riskRanking;
+                if (!rank) return <Tag color="default">-</Tag>;
+                const gradeColor: Record<string, string> = {
+                    A: "green", B: "lime", C: "blue", D: "orange", F: "red",
+                };
+                return (
+                    <Tooltip title={
+                        <div className="text-xs">
+                            <div className="font-semibold">Risk-Adjusted Score: {rank.score}/100</div>
+                            <div>{rank.reason}</div>
+                            <div className="mt-1">Đồng thuận: {rank.factors.consensus}%</div>
+                            <div>RVOL: {rank.factors.volumeScore}%</div>
+                            <div>Biến động: {rank.factors.volatilityScore}%</div>
+                            <div>Xu hướng: {rank.factors.trendScore}%</div>
+                            <div>S/R: {rank.factors.srScore}%</div>
+                        </div>
+                    }>
+                        <Tag color={gradeColor[rank.grade] ?? "default"} icon={<SafetyCertificateOutlined />} className="text-xs px-1 py-0 cursor-help font-bold">
+                            {rank.score}
+                        </Tag>
+                    </Tooltip>
+                );
+            },
+        },
+        {
+            title: <HeaderWithTip label="Stop" tip="Trailing stop theo ATR" />,
+            key: "stop",
+            width: 75,
+            align: "center",
+            render: (_, record) => {
+                const stop = record.enhanced?.trailingStop;
+                if (!stop) return <Tag color="default">-</Tag>;
+                const rec = stop[stop.recommended];
+                const recLabel = stop.recommended === "conservative" ? "BT" 
+                    : stop.recommended === "aggressive" ? "NĐ" : "TC";
+                const recColor = stop.recommended === "conservative" ? "blue" 
+                    : stop.recommended === "aggressive" ? "red" : "orange";
+                return (
+                    <Tooltip title={
+                        <div className="text-xs">
+                            <div className="font-semibold">Trailing Stop (ATR: {stop.atrPercent.toFixed(1)}%)</div>
+                            <div>{stop.reason}</div>
+                            <div className="mt-1" style={{ color: '#60a5fa' }}>Bảo thủ (3×ATR): {stop.conservative.price.toFixed(2)} (-{stop.conservative.distance.toFixed(1)}%)</div>
+                            <div style={{ color: '#fb923c' }}>Tiêu chuẩn (2×ATR): {stop.standard.price.toFixed(2)} (-{stop.standard.distance.toFixed(1)}%)</div>
+                            <div style={{ color: '#f87171' }}>Năng động (1.5×ATR): {stop.aggressive.price.toFixed(2)} (-{stop.aggressive.distance.toFixed(1)}%)</div>
+                        </div>
+                    }>
+                        <Tag color={recColor} className="text-xs px-1 py-0 cursor-help font-mono">
+                            {recLabel} {rec.distance.toFixed(1)}%
+                        </Tag>
+                    </Tooltip>
+                );
+            },
+        },
     ];
 }
 
@@ -490,15 +691,18 @@ export const SignalTable = memo(function SignalTable({ data, loading }: SignalTa
         <Table
             columns={columns}
             dataSource={data}
+            rowKey="symbol"
             pagination={{ 
                 pageSize: 50, 
                 showSizeChanger: true, 
                 showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} cổ phiếu`,
-                pageSizeOptions: ["20", "50", "100", "200"],
+                pageSizeOptions: ["50", "100", "200"],
             }}
             size="small"
-            scroll={{ x: 950 }}
+            tableLayout="fixed"
+            scroll={{ x: 1600, y: 450 }}
             loading={loading}
+            showSorterTooltip={false}
             rowClassName={(record) => {
                 if (record.isAtFloor) return "bg-cyan-50 dark:bg-cyan-900/10";
                 if (!record.signal) return "";

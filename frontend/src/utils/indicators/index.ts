@@ -87,6 +87,71 @@ export {
     type VolumeConfirmation,
 } from "./volume-confirmation";
 
+// Stochastic RSI
+export {
+    calculateStochasticRSI,
+    getStochRSIZone,
+    STOCH_RSI_COLORS,
+    STOCH_RSI_LEVELS,
+    type StochasticRSIResult,
+} from "./stochastic-rsi";
+
+// On-Balance Volume (OBV)
+export {
+    calculateOBV,
+    detectOBVDivergence,
+    getOBVTrend,
+    OBV_COLORS,
+    type OBVResult,
+} from "./obv";
+
+// Average True Range (ATR)
+export {
+    calculateATR,
+    getVolatilityLevel,
+    calculateStopLoss,
+    ATR_COLORS,
+    type ATRResult,
+} from "./atr";
+
+// Backtesting
+export {
+    runBacktest,
+    getBacktestGrade,
+    type BacktestResult,
+    type BacktestTrade,
+    type BacktestOptions,
+} from "./backtesting";
+
+// Price Targets (Support/Resistance)
+export {
+    calculatePivotPoints,
+    calculateFibonacciLevels,
+    calculatePriceTargets,
+    PRICE_TARGET_COLORS,
+    type PivotLevels,
+    type FibonacciLevels,
+    type PriceTargetResult,
+} from "./price-targets";
+
+// Enhanced Signal Features
+export {
+    computeEnhancedSignals,
+    analyzeMultiTimeframe,
+    analyzeDivergence,
+    analyzeSRProximity,
+    analyzeSignalAging,
+    analyzeRiskRanking,
+    analyzeTrailingStop,
+    type EnhancedSignalData,
+    type MultiTimeframeResult,
+    type DivergenceResult,
+    type SRProximityResult,
+    type SignalAgingResult,
+    type RiskRankingResult,
+    type TrailingStopResult,
+} from "./enhanced-signals";
+
 // Utilities
 export {
     removeNulls,

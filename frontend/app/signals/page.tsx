@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
-import { Layout, Card, Tabs, Tag, Button, Typography } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
+import { Layout, Card, Tabs, Tag, Button, Input, Typography } from "antd";
+import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import { MainNav } from "@/components";
 import { SignalTable } from "@/components/tables/SignalTable";
 import { SignalStatsCards, SignalLegend, SignalMethodology } from "@/components/signals";
-import { useSignals, VN30_SYMBOLS, type ExchangeType } from "@/hooks/useSignals";
+import { useSignals, VN30_SYMBOLS, type ExchangeType, useDebounce } from "@/hooks";
 import type { SignalStrength } from "@/utils/indicators";
 
 const { Content } = Layout;
@@ -27,6 +27,10 @@ type FilterType = "ALL" | SignalStrength;
 export default function SignalsPage() {
     const [activeExchange, setActiveExchange] = useState<ExchangeType>("VN30");
     const [filter, setFilter] = useState<FilterType>("ALL");
+    const [searchText, setSearchText] = useState("");
+    
+    // Debounce search input to avoid filtering on every keystroke
+    const debouncedSearch = useDebounce(searchText, 300);
 
     // Use custom hook for signals data
     const { 
@@ -43,7 +47,17 @@ export default function SignalsPage() {
     const filteredData = useMemo(() => {
         let data = [...tableData];
 
-        // Apply filter
+        // Apply search text filter
+        if (debouncedSearch) {
+            const query = debouncedSearch.toLowerCase();
+            data = data.filter(
+                row =>
+                    row.symbol.toLowerCase().includes(query) ||
+                    row.name.toLowerCase().includes(query)
+            );
+        }
+
+        // Apply signal strength filter
         if (filter !== "ALL") {
             data = data.filter(row => row.signal?.overall === filter);
         }
@@ -64,7 +78,7 @@ export default function SignalsPage() {
         });
 
         return data;
-    }, [tableData, filter]);
+    }, [tableData, filter, debouncedSearch]);
 
     // Memoized tab change handler
     const handleExchangeChange = useCallback((key: string) => {
@@ -144,6 +158,18 @@ export default function SignalsPage() {
                         filter={filter} 
                         onFilterChange={handleFilterChange} 
                     />
+
+                    {/* Search */}
+                    <div className="mb-4">
+                        <Input
+                            placeholder="Tìm mã CP hoặc tên công ty..."
+                            prefix={<SearchOutlined />}
+                            allowClear
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            style={{ maxWidth: 360 }}
+                        />
+                    </div>
 
                     {/* Main Table */}
                     <Card styles={{ body: { padding: 0 } }}>
