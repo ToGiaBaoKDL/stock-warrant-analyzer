@@ -1,3 +1,5 @@
+"use client";
+
 import { Skeleton, Card, Layout } from "antd";
 
 const { Content } = Layout;

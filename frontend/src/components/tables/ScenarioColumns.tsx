@@ -57,7 +57,7 @@ export function getWarrantScenarioColumns({
             key: "grossRevenue",
             align: "right",
             render: (value: number) => (
-                <Text className="text-slate-600">{formatVND(value)}</Text>
+                <Text className="text-slate-600 dark:text-slate-400">{formatVND(value)}</Text>
             ),
         },
         {
@@ -173,7 +173,7 @@ export function getStockScenarioColumns({
             key: "grossRevenue",
             align: "right",
             render: (value: number) => (
-                <Text className="text-slate-600">{formatVND(value)}</Text>
+                <Text className="text-slate-600 dark:text-slate-400">{formatVND(value)}</Text>
             ),
         },
         {

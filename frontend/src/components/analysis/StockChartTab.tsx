@@ -1006,15 +1006,15 @@ export const StockChartTab = React.memo(function StockChartTab({
                 {crosshairData && (
                     <div className="absolute top-2 left-2 z-20 bg-white/90 dark:bg-gray-800/90 rounded-lg px-3 py-2 shadow-sm border border-gray-200 dark:border-gray-700 text-xs">
                         <div className="flex gap-4 items-center">
-                            <span className="text-gray-500">{crosshairData.time}</span>
-                            <span><span className="text-gray-400">O:</span> {crosshairData.open.toLocaleString()}</span>
-                            <span><span className="text-gray-400">H:</span> <span style={{ color: "var(--color-up)" }}>{crosshairData.high.toLocaleString()}</span></span>
-                            <span><span className="text-gray-400">L:</span> <span style={{ color: "var(--color-down)" }}>{crosshairData.low.toLocaleString()}</span></span>
-                            <span><span className="text-gray-400">C:</span> {crosshairData.close.toLocaleString()}</span>
+                            <span className="text-gray-500 dark:text-gray-400">{crosshairData.time}</span>
+                            <span><span className="text-gray-400 dark:text-gray-500">O:</span> {crosshairData.open.toLocaleString()}</span>
+                            <span><span className="text-gray-400 dark:text-gray-500">H:</span> <span style={{ color: "var(--color-up)" }}>{crosshairData.high.toLocaleString()}</span></span>
+                            <span><span className="text-gray-400 dark:text-gray-500">L:</span> <span style={{ color: "var(--color-down)" }}>{crosshairData.low.toLocaleString()}</span></span>
+                            <span><span className="text-gray-400 dark:text-gray-500">C:</span> {crosshairData.close.toLocaleString()}</span>
                             <span style={{ color: crosshairData.change >= 0 ? "var(--color-up)" : "var(--color-down)" }}>
                                 {crosshairData.change >= 0 ? "+" : ""}{crosshairData.change.toLocaleString()} ({crosshairData.changePercent >= 0 ? "+" : ""}{crosshairData.changePercent.toFixed(2)}%)
                             </span>
-                            <span><span className="text-gray-400">Vol:</span> {(crosshairData.volume / 1000).toFixed(0)}K</span>
+                            <span><span className="text-gray-400 dark:text-gray-500">Vol:</span> {(crosshairData.volume / 1000).toFixed(0)}K</span>
                         </div>
                     </div>
                 )}

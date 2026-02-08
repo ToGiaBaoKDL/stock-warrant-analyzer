@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Card, Spin, Typography, Tag, Table } from "antd";
+import { Card, Spin, Typography, Tag, Table, Tooltip } from "antd";
 import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined } from "@ant-design/icons";
 import type { StockItem, WarrantItem } from "@/types/api";
 import { formatVND, getFullPriceColorHex } from "@/utils";
@@ -188,16 +188,20 @@ export const PriceInfoTab = React.memo(function PriceInfoTab({
 
     return (
         <Card variant="borderless" className="h-full">
-            {/* Header with Symbol and Name */}
-            <div className="mb-4 pb-3 border-b">
-                <div className="flex items-baseline gap-3">
-                    <Title level={3} style={{ margin: 0, color: priceColor }}>
-                        {data.symbol}
-                    </Title>
-                    <Text className="text-sm" style={{ color: "var(--foreground)" }}>
+            <div className="flex items-baseline gap-3 border-b w-full">
+                <Title
+                    level={3}
+                    className="whitespace-nowrap flex-shrink-0"
+                    style={{ margin: 0, color: priceColor }}
+                >
+                    {data.symbol}
+                </Title>
+
+                <Tooltip title={isStock ? stockData.name : warrantData.underlying_symbol}>
+                    <Text className="text-sm truncate max-w-[300px] cursor-help">
                         {isStock ? stockData.name : warrantData.underlying_symbol}
                     </Text>
-                </div>
+                </Tooltip>
             </div>
 
             {/* Vertical Price Table */}

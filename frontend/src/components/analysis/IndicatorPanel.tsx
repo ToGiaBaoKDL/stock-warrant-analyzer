@@ -175,7 +175,7 @@ export const IndicatorPanel: React.FC<IndicatorPanelProps> = ({ indicators, onCh
                 </div>
                 {indicators.showBB && (
                     <div className="flex gap-2 items-center mt-2">
-                        <Text className="text-xs text-gray-500">Period:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">Period:</Text>
                         <InputNumber
                             size="small"
                             min={2}
@@ -184,7 +184,7 @@ export const IndicatorPanel: React.FC<IndicatorPanelProps> = ({ indicators, onCh
                             onChange={(value) => value && onChange("bbPeriod", value)}
                             style={{ width: 60 }}
                         />
-                        <Text className="text-xs text-gray-500">σ:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">σ:</Text>
                         <InputNumber
                             size="small"
                             min={1}
@@ -210,7 +210,7 @@ export const IndicatorPanel: React.FC<IndicatorPanelProps> = ({ indicators, onCh
                 </div>
                 {indicators.showVolume && (
                     <div className="flex gap-2 items-center mt-2">
-                        <Text className="text-xs text-gray-500">MA Period:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">MA Period:</Text>
                         <InputNumber
                             size="small"
                             min={2}
@@ -235,13 +235,13 @@ export const IndicatorPanel: React.FC<IndicatorPanelProps> = ({ indicators, onCh
                 </div>
                 {indicators.showMACD && (
                     <div className="flex gap-1 items-center mt-2 flex-wrap">
-                        <Text className="text-xs text-gray-500">F:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">F:</Text>
                         <InputNumber size="small" min={2} max={50} value={indicators.macdFast}
                             onChange={(v) => v && onChange("macdFast", v)} style={{ width: 50 }} />
-                        <Text className="text-xs text-gray-500">S:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">S:</Text>
                         <InputNumber size="small" min={2} max={100} value={indicators.macdSlow}
                             onChange={(v) => v && onChange("macdSlow", v)} style={{ width: 50 }} />
-                        <Text className="text-xs text-gray-500">Sig:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">Sig:</Text>
                         <InputNumber size="small" min={2} max={50} value={indicators.macdSignal}
                             onChange={(v) => v && onChange("macdSignal", v)} style={{ width: 50 }} />
                     </div>
@@ -260,7 +260,7 @@ export const IndicatorPanel: React.FC<IndicatorPanelProps> = ({ indicators, onCh
                 </div>
                 {indicators.showRSI && (
                     <div className="flex gap-2 items-center mt-2">
-                        <Text className="text-xs text-gray-500">Period:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">Period:</Text>
                         <InputNumber size="small" min={2} max={50} value={indicators.rsiPeriod}
                             onChange={(v) => v && onChange("rsiPeriod", v)} style={{ width: 60 }} />
                     </div>
@@ -279,13 +279,13 @@ export const IndicatorPanel: React.FC<IndicatorPanelProps> = ({ indicators, onCh
                 </div>
                 {indicators.showIchimoku && (
                     <div className="flex gap-1 items-center mt-2 flex-wrap">
-                        <Text className="text-xs text-gray-500">T:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">T:</Text>
                         <InputNumber size="small" min={2} max={50} value={indicators.ichimokuTenkan}
                             onChange={(v) => v && onChange("ichimokuTenkan", v)} style={{ width: 45 }} />
-                        <Text className="text-xs text-gray-500">K:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">K:</Text>
                         <InputNumber size="small" min={2} max={100} value={indicators.ichimokuKijun}
                             onChange={(v) => v && onChange("ichimokuKijun", v)} style={{ width: 45 }} />
-                        <Text className="text-xs text-gray-500">S:</Text>
+                        <Text className="text-xs text-gray-500 dark:text-gray-400">S:</Text>
                         <InputNumber size="small" min={2} max={200} value={indicators.ichimokuSenkouB}
                             onChange={(v) => v && onChange("ichimokuSenkouB", v)} style={{ width: 45 }} />
                     </div>

@@ -86,7 +86,7 @@ export function WarrantTableSkeleton() {
         
         {/* Table rows */}
         {[1, 2, 3, 4, 5].map((row) => (
-          <div key={row} className="flex gap-4 py-3 border-b border-gray-100">
+          <div key={row} className="flex gap-4 py-3 border-b border-gray-100 dark:border-gray-700">
             {[150, 80, 100, 80, 100, 120, 140, 120].map((w, i) => (
               <Skeleton.Input key={i} active size="small" style={{ width: w }} />
             ))}

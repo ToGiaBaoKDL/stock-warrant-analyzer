@@ -147,19 +147,20 @@ export function useSignals({ exchange }: UseSignalsOptions): UseSignalsResult {
 
     // Fetch chart history for signals calculation
     // Uses longer staleTime since technical indicators don't need real-time updates
+    // MA200 needs 200+ data points, so we fetch 350 days to cover holidays/weekends
     const historyQueries = useQueries({
         queries: currentStocks.map((stock) => ({
-            queryKey: ["stock-history", stock.symbol, "1D", 120],
+            queryKey: ["stock-history", stock.symbol, "1D", 350],
             queryFn: async () => {
                 const response = await apiClient.get<ChartHistoryResponse>(
                     endpoints.market.history(stock.symbol, { resolution: "1D", days: 350 })
                 );
                 return response.data;
             },
-            staleTime: 10 * 60 * 1000, // 10 minutes - signals don't need frequent updates
+            staleTime: 20 * 60 * 1000, // 20 minutes - signals don't need frequent updates
             gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
             enabled: !!stock.symbol,
-            retry: 1, // Only retry once for failed requests
+            retry: 1,
         })),
     });
 

@@ -412,7 +412,7 @@ export default function AnalysisPage() {
         <Content className="flex items-center justify-center p-6 h-[calc(100vh-64px)]">
           <div className="text-center text-gray-400">
             <LineChartOutlined className="text-6xl mb-4 opacity-50" />
-            <Title level={4} className="!text-gray-500 !font-normal">
+            <Title level={4} className="!text-gray-500 dark:!text-gray-400 !font-normal">
               Vui lòng chọn cổ phiếu hoặc chứng quyền
             </Title>
             <Text type="secondary">
@@ -613,7 +613,7 @@ export default function AnalysisPage() {
                     <div className="flex gap-4 items-end">
                       <div className="w-40">
                         <div className="mb-2">
-                          <Text type="secondary" className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                          <Text type="secondary" className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                             <DollarOutlined className="mr-1" />
                             Giá mua
                           </Text>
@@ -630,7 +630,7 @@ export default function AnalysisPage() {
                       </div>
                       <div className="w-32">
                         <div className="mb-2">
-                          <Text type="secondary" className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                          <Text type="secondary" className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                             <SwapOutlined className="mr-1" />
                             Số lượng
                           </Text>
