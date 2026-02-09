@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import type { WarrantItem } from "@/types/api";
 import type { FeeSettings } from "@/stores/useWarrantStore";
-import { calculateBreakEven, calculateCost, calculateRevenue } from "@/utils/calculations";
+import { calculateBreakEven, calculateCost } from "@/utils/calculations";
 
 // ============================================
 // Types
@@ -17,7 +17,7 @@ export interface WarrantTableRow extends WarrantItem {
     estimatedProfit: number;
     estimatedProfitPercent: number;
     totalCost: number;
-    netRevenue: number;
+    exerciseRevenue: number;
     leverage: number;
 }
 
@@ -35,16 +35,14 @@ export type SortOption = "symbol" | "breakEven" | "margin" | "expiry" | "volume"
 // ============================================
 
 /**
- * Calculate time value decay factor based on days to maturity
- */
-function getTimeValueFactor(daysToMaturity: number): number {
-    if (daysToMaturity > 30) return 1.0;
-    if (daysToMaturity > 14) return 0.8;
-    return 0.5;
-}
-
-/**
- * Calculate warrant metrics for a single warrant
+ * Calculate warrant metrics using exercise-based (cash settlement) model
+ *
+ * Vietnam CW cash settlement formula:
+ *   Settlement/CW = max(0, (TargetPrice − ExercisePrice) / ConversionRatio)
+ *   Profit = Settlement/CW × Quantity − TotalBuyCost
+ *
+ * Equivalent to: (TargetPrice − BreakEven) × Quantity / Ratio
+ *   where BreakEven = CW_Price × Ratio + ExercisePrice
  */
 function calculateWarrantMetrics(
     warrant: WarrantItem,
@@ -53,7 +51,7 @@ function calculateWarrantMetrics(
     quantity: number,
     feeSettings: FeeSettings
 ): WarrantTableRow {
-    // Break-even calculation
+    // Break-even = CW_Price × Ratio + ExercisePrice
     const breakEvenResult = calculateBreakEven(
         warrant.current_price,
         warrant.conversion_ratio,
@@ -61,38 +59,23 @@ function calculateWarrantMetrics(
         targetPrice
     );
 
-    // Intrinsic values
-    const currentIntrinsicValue = Math.max(
-        0,
-        (underlyingPrice - warrant.exercise_price) / warrant.conversion_ratio
-    );
-    const targetIntrinsicValue = Math.max(
+    // Exercise-based profit (Vietnam CW cash settlement)
+    // If target ≤ exercise price → CW expires worthless, exercise value = 0
+    const exerciseValuePerCW = Math.max(
         0,
         (targetPrice - warrant.exercise_price) / warrant.conversion_ratio
     );
+    const exerciseRevenue = exerciseValuePerCW * quantity;
 
-    // Time value
-    const currentTimeValue = Math.max(0, warrant.current_price - currentIntrinsicValue);
-    const timeValueFactor = getTimeValueFactor(warrant.days_to_maturity);
-    const estimatedSellPrice = Math.max(0, targetIntrinsicValue + currentTimeValue * timeValueFactor);
-
-    // Cost calculation
+    // Total buy cost = CW_Price × Quantity + buy fees
     const cost = calculateCost(warrant.current_price, quantity, feeSettings.buyFeePercent);
     const totalCost = cost.totalCost;
 
-    // Revenue calculation
-    const revenue = calculateRevenue(
-        estimatedSellPrice,
-        quantity,
-        feeSettings.sellFeePercent,
-        feeSettings.sellTaxPercent
-    );
-
-    // Profit calculation
-    const estimatedProfit = revenue.netRevenue - totalCost;
+    // Profit = Exercise revenue − Total buy cost
+    const estimatedProfit = exerciseRevenue - totalCost;
     const estimatedProfitPercent = totalCost > 0 ? (estimatedProfit / totalCost) * 100 : 0;
 
-    // Leverage calculation
+    // Leverage = UnderlyingPrice / (CW_Price × Ratio)
     const leverage =
         warrant.current_price > 0 && warrant.conversion_ratio > 0
             ? underlyingPrice / (warrant.current_price * warrant.conversion_ratio)
@@ -107,7 +90,7 @@ function calculateWarrantMetrics(
         estimatedProfit,
         estimatedProfitPercent,
         totalCost,
-        netRevenue: revenue.netRevenue,
+        exerciseRevenue,
         leverage,
     };
 }

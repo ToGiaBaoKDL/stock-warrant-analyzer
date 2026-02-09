@@ -33,8 +33,8 @@ export const WarrantFormulaCards = React.memo(function WarrantFormulaCards({ fee
         <Col xs={24} sm={12} lg={6}>
           <div className="bg-[var(--background)] rounded-lg p-4 h-full">
             <Text className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Công thức lợi nhuận</Text>
-            <Text strong className="font-mono text-sm block mb-2">(Giá KV - Giá TH) / TL + TV</Text>
-            <Text type="secondary" className="text-xs">Giá CW ≈ Intrinsic Value + Time Value</Text>
+            <Text strong className="font-mono text-sm block mb-2">(Giá KV - BE) × SL / TL</Text>
+            <Text type="secondary" className="text-xs">BE = Giá CW × Tỷ lệ + Giá TH. Nếu Giá KV ≤ Giá TH → CW = 0</Text>
           </div>
         </Col>
         <Col xs={24} sm={12} lg={6}>

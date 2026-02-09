@@ -116,6 +116,7 @@ function WarrantsPageContent() {
       dataIndex: "symbol",
       key: "symbol",
       width: 110,
+      fixed: "left" as const,
       render: (symbol: string, record: WarrantTableRow) => {
         // Use 5-color system based on CW's own ceiling/floor
         const symbolColor = getFullPriceColorHex(record.current_price, record.ref_price, record.ceiling, record.floor);
@@ -283,7 +284,7 @@ function WarrantsPageContent() {
     },
     {
       title: (
-        <Tooltip title="Giá cổ phiếu mẹ cần đạt để hòa vốn khi exercise CW">
+        <Tooltip title="Giá hòa vốn = (Giá CW × Tỷ lệ CĐ) + Giá TH. Đây là giá CP mẹ cần đạt để không lỗ khi exercise CW đến đáo hạn">
           <span>Break-even <InfoCircleOutlined className="text-gray-400" /></span>
         </Tooltip>
       ),
@@ -298,7 +299,7 @@ function WarrantsPageContent() {
     },
     {
       title: (
-        <Tooltip title={`Lợi nhuận ước tính với ${quantity.toLocaleString()} CW dựa trên Giá trị nội tại: (Giá kỳ vọng - Giá TH) / Tỷ lệ + Time Value`}>
+        <Tooltip title={`Lợi nhuận exercise với ${quantity.toLocaleString()} CW = max(0, (Giá KV − Giá TH) / Tỷ lệ) × SL − Chi phí mua. Nếu Giá KV ≤ Giá TH → CW hết giá trị, lỗ toàn bộ vốn`}>
           <span>Lợi nhuận <InfoCircleOutlined className="text-gray-400" /></span>
         </Tooltip>
       ),
@@ -476,6 +477,7 @@ function WarrantsPageContent() {
                     columns={columns}
                     dataSource={tableData}
                     rowKey="symbol"
+                    showSorterTooltip={false}
                     scroll={{ x: 1200, y: 500 }}
                     pagination={{
                       pageSize: 15,
