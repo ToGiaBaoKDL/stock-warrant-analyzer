@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import type { WarrantItem } from "@/types/api";
 import type { FeeSettings } from "@/stores/useWarrantStore";
-import { calculateBreakEven, calculateCost } from "@/utils/calculations";
+import { calculateBreakEven, calculateCost, calculateRevenue } from "@/utils/calculations";
 
 // ============================================
 // Types
@@ -17,7 +17,8 @@ export interface WarrantTableRow extends WarrantItem {
     estimatedProfit: number;
     estimatedProfitPercent: number;
     totalCost: number;
-    exerciseRevenue: number;
+    grossExerciseRevenue: number;
+    netExerciseRevenue: number;
     leverage: number;
 }
 
@@ -38,10 +39,12 @@ export type SortOption = "symbol" | "breakEven" | "margin" | "expiry" | "volume"
  * Calculate warrant metrics using exercise-based (cash settlement) model
  *
  * Vietnam CW cash settlement formula:
- *   Settlement/CW = max(0, (TargetPrice − ExercisePrice) / ConversionRatio)
- *   Profit = Settlement/CW × Quantity − TotalBuyCost
+ *   GrossExerciseValue = max(0, (TargetPrice − ExercisePrice) / Ratio) × Quantity
+ *   NetExerciseRevenue = GrossExerciseValue − SellFee − SellTax
+ *   TotalBuyCost = CW_Price × Quantity + BuyFee
+ *   Profit = NetExerciseRevenue − TotalBuyCost
  *
- * Equivalent to: (TargetPrice − BreakEven) × Quantity / Ratio
+ * Equivalent to: (TargetPrice − BreakEven) × Quantity / Ratio − AllFees
  *   where BreakEven = CW_Price × Ratio + ExercisePrice
  */
 function calculateWarrantMetrics(
@@ -51,7 +54,7 @@ function calculateWarrantMetrics(
     quantity: number,
     feeSettings: FeeSettings
 ): WarrantTableRow {
-    // Break-even = CW_Price × Ratio + ExercisePrice
+    // Break-even = CW_Price × Ratio + ExercisePrice (không tính phí)
     const breakEvenResult = calculateBreakEven(
         warrant.current_price,
         warrant.conversion_ratio,
@@ -65,14 +68,24 @@ function calculateWarrantMetrics(
         0,
         (targetPrice - warrant.exercise_price) / warrant.conversion_ratio
     );
-    const exerciseRevenue = exerciseValuePerCW * quantity;
+    const grossExerciseRevenue = exerciseValuePerCW * quantity;
+
+    // Calculate net exercise revenue after sell fees and tax
+    // Khi exercise CW, bạn nhận tiền mặt → phải trừ phí bán + thuế
+    const revenue = calculateRevenue(
+        exerciseValuePerCW,
+        quantity,
+        feeSettings.sellFeePercent,
+        feeSettings.sellTaxPercent
+    );
+    const netExerciseRevenue = revenue.netRevenue;
 
     // Total buy cost = CW_Price × Quantity + buy fees
     const cost = calculateCost(warrant.current_price, quantity, feeSettings.buyFeePercent);
     const totalCost = cost.totalCost;
 
-    // Profit = Exercise revenue − Total buy cost
-    const estimatedProfit = exerciseRevenue - totalCost;
+    // Profit = Net exercise revenue − Total buy cost
+    const estimatedProfit = netExerciseRevenue - totalCost;
     const estimatedProfitPercent = totalCost > 0 ? (estimatedProfit / totalCost) * 100 : 0;
 
     // Leverage = UnderlyingPrice / (CW_Price × Ratio)
@@ -90,7 +103,8 @@ function calculateWarrantMetrics(
         estimatedProfit,
         estimatedProfitPercent,
         totalCost,
-        exerciseRevenue,
+        grossExerciseRevenue,
+        netExerciseRevenue,
         leverage,
     };
 }
