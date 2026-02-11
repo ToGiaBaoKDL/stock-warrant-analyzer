@@ -76,7 +76,7 @@ interface IndicatorPanelProps {
 export const IndicatorPanel: React.FC<IndicatorPanelProps> = ({ indicators, onChange }) => {
     return (
         <div 
-            className="p-4 w-72 max-h-96 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
+            className="p-4 w-full sm:w-72 max-h-96 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
             onClick={(e) => e.stopPropagation()}
         >
             <Text strong className="text-sm">Chỉ báo kỹ thuật</Text>

@@ -92,10 +92,10 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
                 {/* Custom Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
+                    className="absolute top-3 right-3 w-10 h-10 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
                     aria-label="Close"
                 >
-                    <span className="text-lg leading-none">×</span>
+                    <span className="text-xl leading-none">×</span>
                 </button>
             </div>
 
@@ -112,7 +112,7 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
                     }}
                 >
                     {/* 3 Fee Inputs in same row */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <Form.Item
                             name="buyFeePercent"
                             label={<Text className="text-gray-600 dark:text-gray-300 font-medium text-xs">Phí mua</Text>}
@@ -170,7 +170,7 @@ export function FeeSettingsModal({ open, onClose }: FeeSettingsModalProps) {
                     {/* Quick Reference - 3 brokers in same row */}
                     {/* Quick Reference - No container */}
                     <Text className="text-gray-400 text-xs block mb-2">Phí phổ biến theo CTCK</Text>
-                    <div className="grid grid-cols-3 gap-2 mb-4">
+                    <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 mb-4">
                         {[
                             { name: "SSI, VND", fee: "0.15%" },
                             { name: "TCBS", fee: "0.15%" },
@@ -214,8 +214,7 @@ export function FeeSettingsButton() {
             <Button
                 icon={<SettingOutlined />}
                 onClick={() => setIsOpen(true)}
-                size="small"
-                className="!h-[32px]"
+                size="middle"
             >
                 Phí GD
             </Button>

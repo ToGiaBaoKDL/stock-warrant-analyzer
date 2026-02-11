@@ -699,6 +699,15 @@ textarea,
   }
 }
 
+/* ===== Small screens (< Tailwind sm) ===== */
+@media (max-width: 639px) {
+  /* Ensure inputs stack full-width on mobile */
+  .ant-input-affix-wrapper,
+  .ant-select {
+    max-width: 100%;
+  }
+}
+
 /* Safe area insets for notched devices */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   body {
@@ -728,6 +737,16 @@ textarea,
   .ant-btn-primary {
     border: 2px solid #000 !important;
   }
+}
+
+/* Hide scrollbar while keeping scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Custom utility classes */

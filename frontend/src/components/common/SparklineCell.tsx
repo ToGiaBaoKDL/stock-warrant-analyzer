@@ -93,7 +93,7 @@ export const SparklineCell = React.memo(function SparklineCell({
                 style={{ width, height }}
                 className="flex items-center justify-center text-gray-400 text-xs"
             >
-                —
+                -
             </div>
         );
     }

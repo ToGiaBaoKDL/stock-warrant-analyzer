@@ -15,14 +15,14 @@ const { Text } = Typography;
 export const SignalLegend = memo(function SignalLegend() {
     return (
         <Card size="small" className="mt-4">
-            <div className="flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                 <Text strong>Chỉ báo:</Text>
                 <Space wrap>
                     <Tag color="green">+ Tăng</Tag>
                     <Tag color="red">- Giảm</Tag>
                     <Tag color="default">o Trung lập</Tag>
                 </Space>
-                <span className="text-gray-400">|</span>
+                <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">│</span>
                 <Space wrap className="text-xs">
                     <Text type="secondary"><b>RSI:</b> 14D</Text>
                     <Text type="secondary"><b>MACD:</b> 12,26,9</Text>
@@ -31,7 +31,7 @@ export const SignalLegend = memo(function SignalLegend() {
                     <Text type="secondary"><b>RVOL:</b> 20D avg</Text>
                 </Space>
             </div>
-            <div className="flex flex-wrap items-center gap-4 mt-2 text-sm border-t pt-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm border-t pt-2">
                 <Text strong>Xu hướng:</Text>
                 <Space wrap size={4}>
                     <Tag color="green" className="text-xs">Up Mạnh</Tag>
@@ -40,9 +40,9 @@ export const SignalLegend = memo(function SignalLegend() {
                     <Tag color="default" className="text-xs">Sideway</Tag>
                     <Tag color="cyan" className="text-xs">Sàn</Tag>
                 </Space>
-                <span className="text-gray-400">|</span>
+                <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">│</span>
                 <Text strong>Màu giá:</Text>
-                <Space size={4}>
+                <Space wrap size={4}>
                     <span style={{ color: "var(--color-ceiling)" }}>■ Trần</span>
                     <span style={{ color: "var(--color-up)" }}>■ Tăng</span>
                     <span style={{ color: "var(--color-ref)" }}>■ TC</span>

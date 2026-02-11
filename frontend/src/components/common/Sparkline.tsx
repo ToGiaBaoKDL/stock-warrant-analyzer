@@ -67,7 +67,7 @@ export const Sparkline = React.memo(function Sparkline({
                 className={`flex items-center justify-center text-gray-400 text-xs ${className}`}
                 style={{ width, height }}
             >
-                —
+                -
             </div>
         );
     }

@@ -334,7 +334,7 @@ export default function BacktestPage() {
             label: (
                 <div className="flex items-center gap-2">
                     <Tag color="blue" className="text-xs">CP</Tag>
-                    {`${stock.symbol} — ${stock.name}`}
+                    {`${stock.symbol} - ${stock.name}`}
                 </div>
             ),
         }));
@@ -518,10 +518,10 @@ export default function BacktestPage() {
         <Layout className="min-h-screen" style={{ background: "var(--background)" }}>
             <MainNav />
 
-            <Content className="p-6">
+            <Content className="p-3 sm:p-4 lg:p-6">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                         <div>
                             <Title level={3} className="!mb-0 flex items-center gap-2">
                                 <ExperimentOutlined />

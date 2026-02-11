@@ -47,7 +47,7 @@ export function MainNav({
         >
             <div className="max-w-7xl mx-auto w-full flex items-center">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2.5 mr-8 shrink-0 group">
+                <Link href="/" className="flex items-center gap-2.5 mr-3 sm:mr-8 shrink-0 group">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform" style={{ background: "var(--gradient-primary)" }}>
                         <FireOutlined className="!text-white text-base" />
                     </div>
@@ -58,7 +58,7 @@ export function MainNav({
                 </Link>
 
                 {/* Navigation tabs */}
-                <nav className="flex items-center gap-0.5 bg-white/90 dark:bg-gray-800/90 rounded-lg p-1 shadow-sm dark:shadow-gray-900/20">
+                <nav className="flex items-center gap-0.5 bg-white/90 dark:bg-gray-800/90 rounded-lg p-1 shadow-sm dark:shadow-gray-900/20 overflow-x-auto no-scrollbar">
                     {navItems.map((item) => {
                         // Normalize paths for comparison
                         const currentPath = pathname || "";
@@ -73,7 +73,7 @@ export function MainNav({
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`px-4 py-2 rounded-md text-sm transition-all flex items-center gap-2 whitespace-nowrap ${isActive
+                                className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${isActive
                                     ? "!text-white font-bold shadow-sm"
                                     : "!text-gray-600 dark:!text-gray-300 hover:!text-gray-900 dark:hover:!text-white hover:bg-gray-200 dark:hover:bg-gray-700 font-medium"
                                     }`}

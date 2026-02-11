@@ -22,7 +22,7 @@ export const WarrantStats = React.memo(function WarrantStats({ tableData, bestBr
         <Card className="shadow-sm border-0" styles={{ body: { padding: 16 } }}>
           <div className="text-center">
             <Text className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Tổng số CW</Text>
-            <Text strong className="text-2xl">{tableData.length}</Text>
+            <span className="text-2xl font-semibold">{tableData.length}</span>
           </div>
         </Card>
       </Col>

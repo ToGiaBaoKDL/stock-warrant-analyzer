@@ -250,18 +250,18 @@ export const StockTable = React.memo(function StockTable({
     return (
         <div className="space-y-4">
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                 <Input
                     placeholder="Tìm mã hoặc tên..."
                     prefix={<SearchOutlined className="text-gray-400 dark:text-gray-500" />}
                     value={search}
                     onChange={handleSearchChange}
-                    style={{ width: 200 }}
+                    className="w-full sm:w-[200px]"
                     allowClear
                 />
                 <Select
                     placeholder="Sắp xếp"
-                    style={{ width: 140 }}
+                    className="w-[calc(50%-6px)] sm:w-[140px]"
                     allowClear
                     value={sortField}
                     onChange={handleSortChange}
@@ -271,6 +271,7 @@ export const StockTable = React.memo(function StockTable({
                     icon={<ReloadOutlined spin={isFetching} />}
                     onClick={() => refetch()}
                     style={{ color: AppColors.primary, borderColor: AppColors.primary }}
+                    className="w-[calc(50%-6px)] sm:w-auto"
                 >
                     Làm mới
                 </Button>

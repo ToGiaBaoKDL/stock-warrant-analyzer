@@ -70,7 +70,7 @@ export const WarrantFilters = React.memo(function WarrantFilters({
   showFilters,
 }: WarrantFiltersProps) {
   return (
-    <div className="!bg-white dark:!bg-[#1f1f1f] p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 sticky top-16 z-10">
+    <div className="!bg-white dark:!bg-[#1f1f1f] p-3 sm:p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-4 sm:mb-6 sticky top-14 z-10">
       <div className="flex flex-col gap-4">
         {/* Top Row: Inputs & Actions */}
         <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-end">
@@ -94,7 +94,7 @@ export const WarrantFilters = React.memo(function WarrantFilters({
               />
             </div>
 
-            <div className="w-full sm:w-22">
+            <div className="w-full sm:w-44">
               <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1.5">
                 Giá kỳ vọng
               </div>
@@ -130,9 +130,9 @@ export const WarrantFilters = React.memo(function WarrantFilters({
           </div>
 
           {/* Right Side: Current Price & Actions */}
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start sm:justify-end">
             {underlyingInfo && (
-              <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 flex flex-col items-end mr-2">
+              <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 flex flex-col items-start sm:items-end mr-0 sm:mr-2 w-full sm:w-auto">
                 <span className="text-[10px] text-gray-400 font-medium uppercase">Hiện tại</span>
                 <div className="flex items-center gap-2">
                   <span className="font-bold" style={{ color: getFullPriceColorHex(underlyingInfo.current_price, underlyingInfo.ref_price, underlyingInfo.ceiling, underlyingInfo.floor) }}>{formatVND(underlyingInfo.current_price)}</span>
@@ -143,7 +143,7 @@ export const WarrantFilters = React.memo(function WarrantFilters({
                       backgroundColor: (underlyingInfo.change ?? 0) >= 0 ? 'var(--color-up-bg, rgba(22,163,74,0.1))' : 'var(--color-down-bg, rgba(220,38,38,0.1))',
                     }}
                   >
-                    {(underlyingInfo.change_percent ?? 0) > 0 ? "+" : ""}{formatPercent(underlyingInfo.change_percent ?? 0)}
+                    {(underlyingInfo.change_percent ?? 0) > 0 ? "" : ""}{formatPercent(underlyingInfo.change_percent ?? 0)}
                   </span>
                 </div>
               </div>
@@ -176,9 +176,9 @@ export const WarrantFilters = React.memo(function WarrantFilters({
         </div>
 
         {showFilters && (
-          <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Bộ lọc:</span>
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar w-full sm:w-auto">
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium shrink-0">Bộ lọc:</span>
               <Segmented
                 size="middle"
                 options={[
@@ -191,8 +191,8 @@ export const WarrantFilters = React.memo(function WarrantFilters({
               />
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Sắp xếp:</span>
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar w-full sm:w-auto">
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium shrink-0">Sắp xếp:</span>
               <Segmented
                 size="middle"
                 options={[

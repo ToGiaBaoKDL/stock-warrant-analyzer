@@ -139,7 +139,7 @@ export default function Home() {
       {/* Header */}
       <MainNav />
 
-      <Content className="p-6">
+      <Content className="p-3 sm:p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Market Summary Cards - Using extracted component */}
           <MarketSummaryGrid getSummary={getSummary} exchanges={["HOSE", "HNX", "UPCOM", "VN30"]} />

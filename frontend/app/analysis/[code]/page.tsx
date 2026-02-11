@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Layout,
   Card,
@@ -46,6 +46,9 @@ import {
   calculateProfitLoss,
   calculateBreakEven,
   calculateStockBreakEven,
+  calculateExerciseValue,
+  calculateCost,
+  calculateRevenue,
   formatVND,
   formatPercent,
   DEFAULT_BUY_FEE_PERCENT,
@@ -134,6 +137,18 @@ export default function AnalysisPage() {
   });
 
   const [newSellPrice, setNewSellPrice] = useState<number | null>(null);
+  // Target underlying price for warrant exercise comparison
+  const [targetUnderlyingPrice, setTargetUnderlyingPrice] = useState<number | null>(null);
+  const lastTargetSymbolRef = useRef<string | null>(null);
+
+  // Initialize target underlying price when switching CW symbol
+  useEffect(() => {
+    if (!isWarrant || !warrantUnderlying?.current_price) return;
+    if (lastTargetSymbolRef.current !== symbolCode) {
+      setTargetUnderlyingPrice(warrantUnderlying.current_price);
+      lastTargetSymbolRef.current = symbolCode;
+    }
+  }, [isWarrant, warrantUnderlying?.current_price, symbolCode]);
 
   // Build options: stocks from API + warrants from screener results
   // Badge already shows CW/CP, so label only shows symbol - name
@@ -315,6 +330,52 @@ export default function AnalysisPage() {
     );
   }, [isWarrant, warrantData]);
 
+  // Exercise comparison: compare market sell profit vs exercise profit at target underlying price
+  const exerciseComparison = useMemo(() => {
+    if (!isWarrant || !warrantData || !warrantUnderlying || !position || !targetUnderlyingPrice) return null;
+
+    const qty = position.quantity;
+    const buyPrice = position.buyPrice;
+    const exercisePrice = warrantData.exercise_price;
+    const convRatio = warrantData.conversion_ratio;
+
+    // --- Exercise-based profit (cash settlement) ---
+    const exerciseValuePerCW = Math.max(0, (targetUnderlyingPrice - exercisePrice) / convRatio);
+    const grossExercise = exerciseValuePerCW * qty;
+    const exerciseRevenue = calculateRevenue(exerciseValuePerCW, qty, feeSettings.sellFeePercent, feeSettings.sellTaxPercent);
+    const buyCost = calculateCost(buyPrice, qty, feeSettings.buyFeePercent);
+    const exerciseProfit = exerciseRevenue.netRevenue - buyCost.totalCost;
+    const exerciseROI = buyCost.totalCost > 0 ? (exerciseProfit / buyCost.totalCost) * 100 : 0;
+
+    // --- Market sell profit (buy CW, sell CW on market) ---
+    // Estimate CW market price at target underlying using simple intrinsic + time value model
+    const currentIntrinsic = Math.max(0, (warrantUnderlying.current_price - exercisePrice) / convRatio);
+    const timeValue = Math.max(0, warrantData.current_price - currentIntrinsic);
+    const estimatedCWPrice = Math.max(0, exerciseValuePerCW + timeValue * 0.5); // time value decays
+    const marketResult = calculateProfitLoss(
+      buyPrice, estimatedCWPrice, qty,
+      feeSettings.buyFeePercent, feeSettings.sellFeePercent, feeSettings.sellTaxPercent
+    );
+
+    // Break-even
+    const breakEven = calculateBreakEven(buyPrice, convRatio, exercisePrice, targetUnderlyingPrice);
+
+    return {
+      targetPrice: targetUnderlyingPrice,
+      exerciseValuePerCW,
+      grossExercise,
+      netExercise: exerciseRevenue.netRevenue,
+      exerciseProfit,
+      exerciseROI,
+      estimatedCWPrice,
+      marketProfit: marketResult.profit,
+      marketROI: marketResult.profitPercent,
+      breakEvenPrice: breakEven.breakEvenPrice,
+      isProfitable: breakEven.isProfitable,
+      totalCost: buyCost.totalCost,
+    };
+  }, [isWarrant, warrantData, warrantUnderlying, position, targetUnderlyingPrice, feeSettings]);
+
   // Handle position initialization
   const initPosition = () => {
     if (currentPrice) {
@@ -403,7 +464,7 @@ export default function AnalysisPage() {
               )
             }))}
             placeholder="Chọn mã CP/CW..."
-            className="w-72"
+            className="w-full sm:w-72"
             suffixIcon={<SearchOutlined className="text-gray-400" />}
             optionFilterProp="searchText"
             filterOption={(input, option) => {
@@ -481,7 +542,7 @@ export default function AnalysisPage() {
             )
           }))}
           placeholder="Chọn mã khác"
-          className="w-72"
+          className="w-full sm:w-72"
           suffixIcon={<SearchOutlined className="text-gray-400" />}
           optionFilterProp="searchText"
           filterOption={(input, option) => {
@@ -657,8 +718,8 @@ export default function AnalysisPage() {
                 <div className="bg-gray-50/50 dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
                   <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                     {/* Left Group: Inputs */}
-                    <div className="flex gap-4 items-end">
-                      <div className="w-40">
+                    <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end w-full sm:w-auto">
+                      <div className="w-full sm:w-40">
                         <div className="mb-2">
                           <Text type="secondary" className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                             <DollarOutlined className="mr-1" />
@@ -675,7 +736,7 @@ export default function AnalysisPage() {
                           parser={(value) => Number(value?.replace(/,/g, ""))}
                         />
                       </div>
-                      <div className="w-32">
+                      <div className="w-full sm:w-32">
                         <div className="mb-2">
                           <Text type="secondary" className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                             <SwapOutlined className="mr-1" />
@@ -696,7 +757,7 @@ export default function AnalysisPage() {
                     </div>
 
                     {/* Right Group: Total Cost */}
-                    <div className="!bg-gray-900 dark:!bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-md flex flex-col justify-center items-end text-right w-fit min-w-[200px]">
+                    <div className="!bg-gray-900 dark:!bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-md flex flex-col justify-center items-end text-right w-full sm:w-fit sm:min-w-[200px]">
                       <span className="text-xs font-bold uppercase tracking-wide mb-1 whitespace-nowrap text-gray-300">
                         Tổng vốn đầu tư
                       </span>
@@ -708,6 +769,124 @@ export default function AnalysisPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Warrant Exercise Comparison: Giá kỳ vọng CP mẹ */}
+                {isWarrant && warrantData && warrantUnderlying && position && (
+                  <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/10 dark:to-amber-900/10 rounded-2xl p-4 border border-orange-200 dark:border-orange-800">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                        <div className="w-full sm:w-52">
+                          <div className="mb-2">
+                            <Text type="secondary" className="text-sm font-medium uppercase tracking-wide">
+                              <FireOutlined className="mr-1 text-orange-500" />
+                              Giá kỳ vọng CP mẹ
+                            </Text>
+                          </div>
+                          <InputNumber
+                            size="large"
+                            placeholder={formatVND(warrantUnderlying.current_price)}
+                            value={targetUnderlyingPrice}
+                            onChange={setTargetUnderlyingPrice}
+                            className="w-full !rounded-xl"
+                            min={0}
+                            step={100}
+                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                            parser={(value) => Number(value?.replace(/,/g, ""))}
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            { label: "Hiện tại", price: warrantUnderlying.current_price },
+                            { label: "+5%", price: Math.round(warrantUnderlying.current_price * 1.05) },
+                            { label: "+10%", price: Math.round(warrantUnderlying.current_price * 1.10) },
+                            { label: "+15%", price: Math.round(warrantUnderlying.current_price * 1.15) },
+                            { label: "Trần", price: warrantUnderlying.ceiling || Math.round(warrantUnderlying.current_price * 1.07) },
+                          ].map(p => (
+                            <Button
+                              key={p.label}
+                              size="small"
+                              onClick={() => setTargetUnderlyingPrice(p.price)}
+                              className="!text-orange-700 dark:!text-orange-400 !border-orange-300 dark:!border-orange-700 hover:!bg-orange-100 dark:hover:!bg-orange-900/30 text-xs"
+                            >
+                              {p.label} ({formatVND(p.price)})
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Comparison Cards */}
+                      {exerciseComparison && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Exercise Profit Card */}
+                          <div className={`rounded-xl p-4 border-2 ${exerciseComparison.exerciseProfit >= 0 ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700" : "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700"}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Tag color="orange" className="text-xs">Exercise CW</Tag>
+                              <Tooltip title={`Giá trị exercise = max(0, (${formatVND(exerciseComparison.targetPrice)} − ${formatVND(warrantData.exercise_price)}) / ${warrantData.conversion_ratio}) = ${formatVND(exerciseComparison.exerciseValuePerCW)}/CW`}>
+                                <InfoCircleOutlined className="text-gray-400 cursor-help" />
+                              </Tooltip>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <span>Giá trị exercise/CW:</span>
+                                <span className="font-mono">{formatVND(exerciseComparison.exerciseValuePerCW)}</span>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <span>Thu ròng exercise:</span>
+                                <span className="font-mono">{formatVND(exerciseComparison.netExercise)}</span>
+                              </div>
+                              <Divider className="!my-1.5" />
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium">Lợi nhuận:</span>
+                                <span className={`font-bold text-lg ${exerciseComparison.exerciseProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                                  {exerciseComparison.exerciseProfit >= 0 ? "+" : ""}{formatVND(exerciseComparison.exerciseProfit)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-500">ROI:</span>
+                                <span className={`font-semibold ${exerciseComparison.exerciseROI >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                                  {formatPercent(exerciseComparison.exerciseROI)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Market Sell Profit Card */}
+                          <div className={`rounded-xl p-4 border-2 ${exerciseComparison.marketProfit >= 0 ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700" : "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700"}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Tag color="blue" className="text-xs">Bán CW trên sàn</Tag>
+                              <Tooltip title={`Ước tính giá CW khi CP mẹ = ${formatVND(exerciseComparison.targetPrice)}: ~${formatVND(exerciseComparison.estimatedCWPrice)} (giá trị nội tại + time value giảm)`}>
+                                <InfoCircleOutlined className="text-gray-400 cursor-help" />
+                              </Tooltip>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <span>Giá CW ước tính:</span>
+                                <span className="font-mono">~{formatVND(exerciseComparison.estimatedCWPrice)}</span>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <span>Break-even CP mẹ:</span>
+                                <span className="font-mono">{formatVND(exerciseComparison.breakEvenPrice)}</span>
+                              </div>
+                              <Divider className="!my-1.5" />
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium">Lợi nhuận:</span>
+                                <span className={`font-bold text-lg ${exerciseComparison.marketProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                                  {exerciseComparison.marketProfit >= 0 ? "+" : ""}{formatVND(exerciseComparison.marketProfit)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-500">ROI:</span>
+                                <span className={`font-semibold ${exerciseComparison.marketROI >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                                  {formatPercent(exerciseComparison.marketROI)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Quick Presets */}
                 {position.buyPrice > 0 && (
@@ -786,9 +965,9 @@ export default function AnalysisPage() {
 
 
                 {/* Scenarios Section */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <Text strong>Kịch bản giá bán</Text>
-                  <Space>
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <InputNumber
                       placeholder="Giá bán mới"
                       value={newSellPrice}
@@ -796,7 +975,7 @@ export default function AnalysisPage() {
                       min={0}
                       formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                       parser={(value) => Number(value?.replace(/,/g, ""))}
-                      style={{ width: 140 }}
+                      className="w-full sm:w-[140px]"
                     />
                     <Button
                       type="primary"
@@ -821,7 +1000,7 @@ export default function AnalysisPage() {
                         <Button danger icon={<DeleteOutlined />} className="dark:!text-red-400 dark:!border-red-700 dark:hover:!bg-red-900/30">Xóa tất cả</Button>
                       </Popconfirm>
                     )}
-                  </Space>
+                  </div>
                 </div>
 
                 {scenarios.length === 0 ? (
@@ -830,7 +1009,7 @@ export default function AnalysisPage() {
                     <Text type="secondary" className="block">Nhập giá bán hoặc sử dụng nút thêm nhanh</Text>
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="rounded-lg border border-gray-200 dark:border-gray-700">
                     <Table
                       columns={scenarioColumns}
                       dataSource={scenarioResults}

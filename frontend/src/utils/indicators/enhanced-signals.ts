@@ -4,22 +4,22 @@
  * Six professional-grade signal enrichments that layer on top of the
  * existing 3-Layer Funnel System:
  *
- * 1. **Multi-Timeframe Confirmation** — Aggregate daily data into weekly,
+ * 1. **Multi-Timeframe Confirmation** - Aggregate daily data into weekly,
  *    check if both timeframes agree on the trend direction.
  *
- * 2. **Divergence Detection** — Detect RSI & MACD divergences vs price
+ * 2. **Divergence Detection** - Detect RSI & MACD divergences vs price
  *    (higher highs / lower lows comparison).
  *
- * 3. **Support/Resistance Proximity** — How close the current price is to
+ * 3. **Support/Resistance Proximity** - How close the current price is to
  *    nearest S/R levels (Pivot + Fibonacci), and which zone it sits in.
  *
- * 4. **Signal Aging / Freshness Score** — How many bars since the current
+ * 4. **Signal Aging / Freshness Score** - How many bars since the current
  *    signal first appeared, with a freshness decay score (1.0 → 0.0).
  *
- * 5. **Risk-Adjusted Ranking** — Expected value per trade combining
+ * 5. **Risk-Adjusted Ranking** - Expected value per trade combining
  *    indicator consensus, volume, volatility, and trend alignment.
  *
- * 6. **Trailing Stop Optimizer** — ATR-based trailing stop levels
+ * 6. **Trailing Stop Optimizer** - ATR-based trailing stop levels
  *    calculated at 1.5×, 2× and 3× ATR for different risk appetites.
  *
  * @module enhanced-signals
@@ -494,7 +494,7 @@ export function analyzeSignalAging(
         ageBars,
         freshness,
         label,
-        reason: `${labelVi[label]} (${ageBars} phiên) — Độ tươi: ${freshness}%`,
+        reason: `${labelVi[label]} (${ageBars} phiên) - Độ tươi: ${freshness}%`,
     };
 }
 

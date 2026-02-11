@@ -116,7 +116,6 @@ function WarrantsPageContent() {
       dataIndex: "symbol",
       key: "symbol",
       width: 110,
-      fixed: "left" as const,
       render: (symbol: string, record: WarrantTableRow) => {
         // Use 5-color system based on CW's own ceiling/floor
         const symbolColor = getFullPriceColorHex(record.current_price, record.ref_price, record.ceiling, record.floor);
@@ -394,7 +393,7 @@ function WarrantsPageContent() {
         <FeeSettingsButton />
       </MainNav>
 
-      <Content className="p-6 min-h-screen">
+      <Content className="p-3 sm:p-4 lg:p-6 min-h-screen">
         <div className="max-w-7xl mx-auto">
           {/* Filter Toolbar */}
           <WarrantFilters
@@ -471,8 +470,7 @@ function WarrantsPageContent() {
               <WarrantStats tableData={tableData} bestBreakEvenWarrant={bestBreakEvenWarrant} />
 
               {/* Main Table */}
-              <Card className="shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
-                <div className="relative">
+              <Card className="shadow-sm border border-gray-200 dark:border-gray-700" styles={{ body: { padding: 0 } }}>
                   <Table
                     columns={columns}
                     dataSource={tableData}
@@ -487,8 +485,8 @@ function WarrantsPageContent() {
                     }}
                     rowClassName={() => "hover:bg-slate-50 dark:hover:bg-[#2a2a2a]"}
                     size="middle"
+                    tableLayout="fixed"
                   />
-                </div>
               </Card>
 
               {/* Formula Info Cards */}

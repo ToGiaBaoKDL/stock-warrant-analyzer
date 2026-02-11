@@ -95,10 +95,10 @@ export default function SignalsPage() {
         <Layout className="min-h-screen" style={{ background: "var(--background)" }}>
             <MainNav />
             
-            <Content className="p-6">
+            <Content className="p-3 sm:p-4 lg:p-6">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                         <div>
                             <Title level={3} className="!mb-0">
                                 Tín Hiệu Giao Dịch
@@ -107,13 +107,24 @@ export default function SignalsPage() {
                                 Hệ thống Phễu 3 Lớp: Xu Hướng → Chiến Thuật → Volume
                             </Text>
                         </div>
-                        <Button 
-                            icon={<ReloadOutlined spin={isHistoryLoading} />} 
-                            onClick={refetch}
-                            loading={isStockLoading}
-                        >
-                            Làm mới
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                            <Input
+                                placeholder="Tìm mã hoặc tên..."
+                                prefix={<SearchOutlined className="text-gray-400 dark:text-gray-500" />}
+                                allowClear
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                className="w-full sm:w-[200px]"
+                            />
+                            <Button 
+                                icon={<ReloadOutlined spin={isHistoryLoading} />} 
+                                onClick={refetch}
+                                loading={isStockLoading}
+                                className="w-full sm:w-auto"
+                            >
+                                Làm mới
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Exchange Tabs */}
@@ -158,18 +169,6 @@ export default function SignalsPage() {
                         filter={filter} 
                         onFilterChange={handleFilterChange} 
                     />
-
-                    {/* Search */}
-                    <div className="mb-4">
-                        <Input
-                            placeholder="Tìm mã CP hoặc tên công ty..."
-                            prefix={<SearchOutlined />}
-                            allowClear
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            style={{ maxWidth: 360 }}
-                        />
-                    </div>
 
                     {/* Main Table */}
                     <Card styles={{ body: { padding: 0 } }}>

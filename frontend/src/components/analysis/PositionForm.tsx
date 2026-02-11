@@ -51,7 +51,7 @@ export function PositionForm({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide font-medium">
             Giá mua
@@ -132,7 +132,7 @@ export function QuickPresets({
             <Button
               size="small"
               onClick={() => onAddPreset(preset.factor)}
-              className="!px-2 !py-0.5 text-xs"
+              className="!px-2.5 text-xs"
             >
               {preset.label}
             </Button>
@@ -151,7 +151,7 @@ export function QuickPresets({
                 <Button
                   size="small"
                   onClick={() => onAddUnderlyingPreset(preset.price)}
-                  className="!px-2 !py-0.5 text-xs bg-orange-50 dark:bg-orange-900/20 hover:!bg-orange-100 dark:hover:!bg-orange-900/30"
+                  className="!px-2.5 text-xs bg-orange-50 dark:bg-orange-900/20 hover:!bg-orange-100 dark:hover:!bg-orange-900/30"
                 >
                   {preset.label}
                 </Button>
